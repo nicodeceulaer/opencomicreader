@@ -3,17 +3,13 @@ package com.sketchpunk.ocomicreader.lib;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.opengl.GLES10;
-import android.os.AsyncTask;
-import android.os.Debug;
+import android.os.AsyncTask; 
 
 public class PageLoader{
 	public static interface CallBack{
@@ -200,7 +196,9 @@ public class PageLoader{
 						errMsg = "Error Rescaling Image for Display : " + e.getMessage();
 						System.out.println(errMsg);
 						
-						bmp.recycle(); bmp = null;
+						if(bmp != null) {
+							bmp.recycle(); bmp = null;	
+						}
 					}//if
 				}//if
 				
