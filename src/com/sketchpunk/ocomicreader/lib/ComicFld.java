@@ -12,121 +12,138 @@ import java.util.Locale;
 
 import sage.io.FFilter;
 
-public class ComicFld implements iComicArchive{
+public class ComicFld implements iComicArchive {
 	private File mFile;
-	/*--------------------------------------------------------
-	*/
-	public ComicFld(){}//func
 
-	
 	/*--------------------------------------------------------
-	*/
-	public void clearCache(){}
-	public boolean isStreamResetable(){ return false; }
-	
-	public void close(){
-	}//func
+	 */
+	public ComicFld() {
+	}// func
+
+	/*--------------------------------------------------------
+	 */
+	@Override
+	public void clearCache() {
+	}
+
+	@Override
+	public boolean isStreamResetable() {
+		return false;
+	}
+
+	@Override
+	public void close() {
+	}// func
 
 	@Override
 	public boolean loadFile(String path) {
-		try{
+		try {
 			mFile = new File(path);
 			return (mFile.exists() && mFile.isDirectory());
-		}catch(Exception e){
-		}//try;
+		} catch (Exception e) {
+		}// try;
 		return false;
-	}//func
-	
-	
+	}// func
+
 	/*--------------------------------------------------------
-	*/
-	public List<String> getPageList(){
-		try{
-			FFilter filter = new FFilter(new String[]{".jpg",".jpeg",".png"});
+	 */
+	@Override
+	public List<String> getPageList() {
+		try {
+			FFilter filter = new FFilter(new String[] { ".jpg", ".jpeg", ".png" });
 			File[] fList = mFile.listFiles(filter);
-			
-			if(fList == null) return null;
-			
-			//..................................
+
+			if (fList == null)
+				return null;
+
+			// ..................................
 			List<String> pageList = new ArrayList<String>();
-    		for(File file:fList) pageList.add(file.getPath());
-		
-			//..................................
-			if(pageList.size() > 0){
-				Collections.sort(pageList); //Sort the page names
+			for (File file : fList)
+				pageList.add(file.getPath());
+
+			// ..................................
+			if (pageList.size() > 0) {
+				Collections.sort(pageList, Strings.getNaturalComparator()); // Sort the page names
 				return pageList;
-			}//if
-		}catch(Exception e){
+			}// if
+		} catch (Exception e) {
 			System.err.println("LoadArchive " + e.getMessage());
-		}//try
+		}// try
 
 		return null;
-	}//func
+	}// func
 
-	public InputStream getItemInputStream(String path){
-		try{
+	@Override
+	public InputStream getItemInputStream(String path) {
+		try {
 			File file = new File(path);
-			if(!file.exists()) return null;
-			
-			return new FileInputStream(file);
-		}catch(Exception e){
-			System.out.println(e.getMessage());
-		}//try
-		return null;
-	}//func
-	
-	public boolean getLibraryData(String[] outVar){
-		outVar[0] = "0"; //Page Count
-		outVar[1] = ""; //Path to Cover Entry
-		outVar[2] = ""; //Path to Meta Data
+			if (!file.exists())
+				return null;
 
-		try{
+			return new FileInputStream(file);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}// try
+		return null;
+	}// func
+
+	@Override
+	public boolean getLibraryData(String[] outVar) {
+		outVar[0] = "0"; // Page Count
+		outVar[1] = ""; // Path to Cover Entry
+		outVar[2] = ""; // Path to Meta Data
+
+		try {
 			int pgCnt = 0;
-			String itmName,compare,coverPath = "", metaPath = "";
-			
-			FFilter filter = new FFilter(new String[]{".jpg",".jpeg",".png",".xml"});
+			String itmName, compare, coverPath = "", metaPath = "";
+
+			FFilter filter = new FFilter(new String[] { ".jpg", ".jpeg", ".png", ".xml" });
 			File[] fList = mFile.listFiles(filter);
-			
-			//..................................
-    		for(File file:fList){
-    			itmName = file.getPath();
-    			compare = itmName.toLowerCase(Locale.getDefault());
-    			
-    			if(compare.endsWith(".jpg") || compare.endsWith(".gif") || compare.endsWith(".png")){
-					if(pgCnt == 0 || itmName.compareTo(coverPath) < 0) coverPath = itmName;
+
+			// ..................................
+			for (File file : fList) {
+				itmName = file.getPath();
+				compare = itmName.toLowerCase(Locale.getDefault());
+
+				if (compare.endsWith(".jpg") || compare.endsWith(".gif") || compare.endsWith(".png")) {
+					if (pgCnt == 0 || itmName.compareTo(coverPath) < 0)
+						coverPath = itmName;
 					pgCnt++;
-    			}else if(compare.endsWith("comicinfo.xml")) metaPath = itmName;
-    		}//for
-    		
-			if(pgCnt > 0){
+				} else if (compare.endsWith("comicinfo.xml"))
+					metaPath = itmName;
+			}// for
+
+			if (pgCnt > 0) {
 				outVar[0] = Integer.toString(pgCnt);
 				outVar[1] = coverPath;
 				outVar[2] = metaPath;
-			}//if
-		}catch(Exception e){
+			}// if
+		} catch (Exception e) {
 			System.err.println("getLibraryData " + e.getMessage());
 			return false;
-		}//try
+		}// try
 
 		return true;
-	}//func
+	}// func
 
-	public String[] getMeta(){
+	@Override
+	public String[] getMeta() {
 		String path = mFile.getPath() + "/ComicInfo.xml";
 		File file = new File(path);
-		
-		if(!file.exists()) return null;
-		
+
+		if (!file.exists())
+			return null;
+
 		String[] data = null;
-		try{
+		try {
 			InputStream iStream = new FileInputStream(file);
 			data = MetaParser.ComicRack(iStream);
 			iStream.close();
-		}catch(FileNotFoundException e){
-		}catch(IOException e){
-		}//try
+		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
+		}// try
 
 		return data;
-	}//func
-	
-}//cls
+	}// func
+
+}// cls
