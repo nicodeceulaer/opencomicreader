@@ -21,5 +21,5 @@
         </menu>
 	</item>
 	<item android:id="@+id/mnu_readright" android:title="Read Left to Right" android:orderInCategory="100" android:checkable="true"/>
-	<item android:id="@+id/mnu_immersive" android:title="Turn on Immservice Mode" android:orderInCategory="100" android:showAsAction="never"/>
+	<item android:id="@+id/mnu_immersive" android:title="Turn on Immersive Mode" android:orderInCategory="100" android:showAsAction="never"/>
 </menu>

@@ -3,12 +3,15 @@ package com.sketchpunk.ocomicreader.lib;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
+import javax.microedition.khronos.opengles.GL10;
+
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.opengl.GLES10;
 import android.os.AsyncTask; 
 
 public class PageLoader{
@@ -79,6 +82,9 @@ public class PageLoader{
 			
 			//...................................			
 			int maxTextureSize = ((Integer)params[0]).intValue();
+			if(maxTextureSize == 0) {
+				maxTextureSize = 4096;
+			}
 			imagePath = (String)params[1];
 			InputStream iStream = archive.getItemInputStream(imagePath);
 			
