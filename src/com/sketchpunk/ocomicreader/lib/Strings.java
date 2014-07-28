@@ -74,9 +74,9 @@ public final class Strings {
 	 *         </p>
 	 * @see #getNaturalComparator(java.text.Collator)
 	 */
-	public static Comparator<String> getNaturalComparator() {
+	public static Comparator<String> getNaturalComparator(boolean caseSensitive) {
 		Collator collator = Collator.getInstance();
-		return getNaturalComparator(collator);
+		return getNaturalComparator(collator, caseSensitive);
 	}
 
 	/**
@@ -89,7 +89,7 @@ public final class Strings {
 	 *         </p>
 	 * @see #getNaturalComparator()
 	 */
-	public static Comparator<String> getNaturalComparator(final Collator collator) {
+	public static Comparator<String> getNaturalComparator(final Collator collator, final boolean caseSensitive) {
 		if (collator == null) {
 			// it's important to explicitly handle this here - else the bug will
 			// manifest anytime later in possibly
@@ -99,7 +99,7 @@ public final class Strings {
 		return new Comparator<String>() {
 			@Override
 			public int compare(String o1, String o2) {
-				return compareNatural(collator, o1, o2);
+				return compareNatural(collator, o1, o2, caseSensitive);
 			}
 		};
 	}
@@ -167,8 +167,8 @@ public final class Strings {
 	 * @return zero iff <code>s</code> and <code>t</code> are equal, a value less than zero iff <code>s</code> lexicographically precedes <code>t</code> and a
 	 *         value larger than zero iff <code>s</code> lexicographically follows <code>t</code>
 	 */
-	public static int compareNatural(Collator collator, String s, String t) {
-		return compareNatural(s, t, true, collator);
+	public static int compareNatural(Collator collator, String s, String t, boolean caseSensitive) {
+		return compareNatural(s, t, caseSensitive, collator);
 	}
 
 	/**

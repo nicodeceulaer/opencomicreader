@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -14,6 +15,7 @@ import sage.io.FFilter;
 
 public class ComicFld implements iComicArchive {
 	private File mFile;
+	private Comparator<String> comparator;
 
 	/*--------------------------------------------------------
 	 */
@@ -63,7 +65,11 @@ public class ComicFld implements iComicArchive {
 
 			// ..................................
 			if (pageList.size() > 0) {
-				Collections.sort(pageList, Strings.getNaturalComparator()); // Sort the page names
+				if(comparator != null) {
+				Collections.sort(pageList, comparator); // Sort the page names\
+				} else {
+					Collections.sort(pageList); // Sort the page names\	
+				}
 				return pageList;
 			}// if
 		} catch (Exception e) {
@@ -145,5 +151,10 @@ public class ComicFld implements iComicArchive {
 
 		return data;
 	}// func
+
+	@Override
+	public void setFileNameComparator(Comparator<String> comparator) {
+		this.comparator = comparator;
+	}
 
 }// cls

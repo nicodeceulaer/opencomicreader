@@ -1,6 +1,7 @@
 package com.sketchpunk.ocomicreader.lib;
 
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
 public interface iComicArchive{
@@ -12,6 +13,8 @@ public interface iComicArchive{
 	public List<String> getPageList();
 	public InputStream getItemInputStream(String path);
 	public boolean getLibraryData(String[] outVar);
+	
+	public void setFileNameComparator(Comparator<String> comparator);
 
 	public String[] getMeta();
 }//interface

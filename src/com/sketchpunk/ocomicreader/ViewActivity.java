@@ -391,7 +391,11 @@ public class ViewActivity extends Activity implements
 
 	private void progressPage(Direction direction) {
 		if (direction != null) {
-			int status = 0;
+			int status = 2;
+			// 2: progressed page
+			// 1: turned page
+			// 0: reached border page
+			// -1: strill preloading
 			if (direction.equals(Direction.LEFT)) {
 				if (!progressPageLeft()) {
 					status = turnPageLeft();

@@ -12,12 +12,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ComicZip implements iComicArchive {
-	ZipFile mArchive;
+	private ZipFile mArchive;
+	private Comparator<String> comparator;
 
 	// I need to load a stream twice to read an image, so
 	// instead of finding the same item again, save ref.
-	ZipEntry mLastItemReq = null;
-	String mLastItemReqPath = "";
+	private ZipEntry mLastItemReq = null;
+	private String mLastItemReqPath = "";
 
 	/*--------------------------------------------------------
 	 */
@@ -82,7 +83,11 @@ public class ComicZip implements iComicArchive {
 
 			// ..................................
 			if (pageList.size() > 0) {
-				Collections.sort(pageList, Strings.getNaturalComparator()); // Sort the page names
+				if(comparator != null) {
+					Collections.sort(pageList, comparator);	
+				} else {
+					Collections.sort(pageList);
+				}
 				return pageList;
 			}// if
 		} catch (Exception e) {
@@ -198,4 +203,9 @@ public class ComicZip implements iComicArchive {
 		// ......................................................
 		return data;
 	}// func
+
+	@Override
+	public void setFileNameComparator(Comparator<String> comparator) {
+		this.comparator = comparator;
+	}
 }// cls

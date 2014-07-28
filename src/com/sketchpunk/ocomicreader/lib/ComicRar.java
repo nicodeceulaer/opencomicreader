@@ -5,14 +5,16 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.sketchpunk.jniunrar.unrar;
 
 public class ComicRar implements iComicArchive {
-	String mLastItemReqPath = "";
-	String mArcPath = "";
-	byte[] mByteCache = null;
+	private String mLastItemReqPath = "";
+	private String mArcPath = "";
+	private Comparator<String> comparator;
+	private byte[] mByteCache = null;
 
 	/*--------------------------------------------------------
 	 */
@@ -63,7 +65,11 @@ public class ComicRar implements iComicArchive {
 		List<String> pageList = Arrays.asList(ary);
 
 		if (pageList.size() > 0) {
-			Collections.sort(pageList, Strings.getNaturalComparator()); // Sort the page names
+			if(comparator != null) {
+				Collections.sort(pageList, comparator);	
+			} else {
+				Collections.sort(pageList);
+			}
 			return pageList;
 		}// if
 
@@ -111,5 +117,10 @@ public class ComicRar implements iComicArchive {
 	@Override
 	public String[] getMeta() {
 		return null;
+	}
+
+	@Override
+	public void setFileNameComparator(Comparator<String> comparator) {
+		this.comparator = comparator;
 	}
 }// cls
