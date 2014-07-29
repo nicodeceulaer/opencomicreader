@@ -26,12 +26,10 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		if (ext.equals("zip") || ext.equals("cbz")) {
 			o = new ComicZip();
-			loadFile(path, o);
-			o.close();
+			return loadFile(path, o);
 		} else if (ext.equals("rar") || ext.equals("cbr")) {
 			o = new ComicRar();
-			loadFile(path, o);
-			o.close();
+			return loadFile(path, o);
 		} else {
 			if (new File(path).isDirectory()) {
 				o = new ComicFld();
@@ -84,8 +82,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		// TODO: Save this to settings, shouldn't have to get this value every
 		// time.
-		android.opengl.GLSurfaceView mGLView = new android.opengl.GLSurfaceView(
-				context);
+		android.opengl.GLSurfaceView mGLView = new android.opengl.GLSurfaceView(context);
 		int[] maxTextureSize = new int[1];
 		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
 
@@ -160,8 +157,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			return 0;
 
 		// Check if the cache loader is busy with a request.
-		if (mCacheLoader != null
-				&& mCacheLoader.getStatus() != AsyncTask.Status.FINISHED) {
+		if (mCacheLoader != null && mCacheLoader.getStatus() != AsyncTask.Status.FINISHED) {
 			System.out.println("Still Loading from Cache.");
 			return -1;
 		}// if
@@ -197,8 +193,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			pgPath = mPageList.get(mCurrentPage + i);
 			if (!mCache.contrainsKey(pgPath)) { // Preload next page if
 												// available.
-				System.out.println("Next Page is not cached "
-						+ Integer.toString(i));
+				System.out.println("Next Page is not cached " + Integer.toString(i));
 				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 0);
 				break;
 			}// if
@@ -214,8 +209,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	/*--------------------------------------------------------
 	Page Loader Event, Getting images out of the archive.*/
 	@Override
-	public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath,
-			int imgType) {
+	public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath, int imgType) {
 		if (errMsg != null) {
 			Toast.makeText(mContext, errMsg, Toast.LENGTH_LONG).show();
 		}// if
