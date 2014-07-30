@@ -1,7 +1,9 @@
 package com.sketchpunk.ocomicreader.ui;
 
-import sage.adapter.SqlCursorAdapter;
+import sage.data.DatabaseHelper;
+import sage.data.SqlCursorLoader;
 import sage.data.Sqlite;
+import sage.data.domain.Comic;
 import sage.loader.LoadImageView;
 import sage.ui.ProgressCircle;
 import android.app.AlertDialog;
@@ -24,23 +26,27 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.sketchpunk.ocomicreader.R;
 import com.sketchpunk.ocomicreader.ViewActivity;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 
-public class CoverGridView extends GridView implements SqlCursorAdapter.AdapterCallback, OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>,
-		LoadImageView.OnImageLoadedListener {
+public class CoverGridView extends GridView implements OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>, LoadImageView.OnImageLoadedListener {
 
 	public interface iCallback {
 		void onDataRefreshComplete();
 	}
 
 	private final String TAG = "COVERGRIDVIEW";
+	private ArrayAdapter<Comic> mAdapter;
+	private RuntimeExceptionDao<Comic, Integer> comicDao;
 
 	public int recordCount = 0;
 	private int mFilterMode = 0;
@@ -84,9 +90,7 @@ public class CoverGridView extends GridView implements SqlCursorAdapter.AdapterC
 		// set values
 		mThumbPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/OpenComicReader/thumbs/";
 
-		mAdapter = new SqlCursorAdapter(this.getContext());
-		mAdapter.setItemLayout(R.layout.listitem_library);
-		mAdapter.setCallback(this);
+		mAdapter = new ArrayAdapter<Comic>(this.getContext(), R.layout.listitem_library);
 
 		this.setNumColumns(mGridColNum);
 		this.setPadding(mGridPadding, mGridPadding + mTopPadding, mGridPadding, mGridPadding);
@@ -97,17 +101,19 @@ public class CoverGridView extends GridView implements SqlCursorAdapter.AdapterC
 
 		// ....................................
 		// Start DB and Data Loader
-		mDb = new Sqlite(this.getContext());
-		mDb.openRead();
+		getComicDao();
 
-		getLoaderManager().initLoader(0, null, this); // Handles the
-														// CursorLoader
 	}// func
 
+	private void getComicDao() {
+		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(this.getContext(), DatabaseHelper.class);
+		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+	}
+
 	public void dispose() {
-		if (mDb != null) {
-			mDb.close();
-			mDb = null;
+		if (comicDao != null) {
+			OpenHelperManager.releaseHelper();
+			comicDao = null;
 		}
 	}// func
 
@@ -160,18 +166,13 @@ public class CoverGridView extends GridView implements SqlCursorAdapter.AdapterC
 	 */
 	public void refreshData() {
 		if (!mIsFirstRun) {
-			if (mDb == null)
-				mDb = new Sqlite(this.getContext());
-			if (!mDb.isOpen())
-				mDb.openRead();
+			if (comicDao == null) {
+				getComicDao();
+			}
 
 			getLoaderManager().restartLoader(0, null, this);
 		} else
 			mIsFirstRun = false;
-	}// func
-
-	private LoaderManager getLoaderManager() {
-		return ((FragmentActivity) this.getContext()).getSupportLoaderManager();
 	}// func
 
 	@Override

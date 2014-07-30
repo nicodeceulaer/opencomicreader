@@ -24,13 +24,13 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sketchpunk.ocomicreader.PrefActivity;
+import com.sketchpunk.ocomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
-public class LibraryActivity extends FragmentActivity implements
-		ComicLibrary.SyncCallback, View.OnClickListener,
-		OnItemSelectedListener, PopupMenu.OnMenuItemClickListener,
-		CoverGridView.iCallback {
+public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, View.OnClickListener, OnItemSelectedListener,
+		PopupMenu.OnMenuItemClickListener, CoverGridView.iCallback {
 
 	private CoverGridView mGridView;
 	private Button mBtnSync;
@@ -55,26 +55,19 @@ public class LibraryActivity extends FragmentActivity implements
 		setContentView(R.layout.activity_library);
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
 		// test();
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		// ....................................
 		// setup background
 		RelativeLayout mLayouts = (RelativeLayout) findViewById(R.id.MainLayout);
 		mLayouts.setBackgroundColor(Color.parseColor("#FF000000"));
 
 		/*
-		 * switch(Integer.parseInt(prefs.getString("libraryBackground","0"))){
-		 * case 0: //Solid
+		 * switch(Integer.parseInt(prefs.getString("libraryBackground","0"))){ case 0: //Solid
 		 * 
-		 * break; case 1: //opaque RelativeLayout mLayouto = (RelativeLayout)
-		 * findViewById(R.id.MainLayout);
-		 * mLayouto.setBackgroundColor(Color.parseColor("#BB000000")); break;
-		 * case 2: //WallPaper final WallpaperManager
-		 * wm=WallpaperManager.getInstance(this); ///WallpaperInfo
-		 * wi=wm.getWallpaperInfo(); ///wm.getDrawable(); final Drawable
-		 * wallpaperDrawable = wm.getFastDrawable();
-		 * getWindow().setBackgroundDrawable(wallpaperDrawable); break;
-		 * }//switch
+		 * break; case 1: //opaque RelativeLayout mLayouto = (RelativeLayout) findViewById(R.id.MainLayout);
+		 * mLayouto.setBackgroundColor(Color.parseColor("#BB000000")); break; case 2: //WallPaper final WallpaperManager wm=WallpaperManager.getInstance(this);
+		 * ///WallpaperInfo wi=wm.getWallpaperInfo(); ///wm.getDrawable(); final Drawable wallpaperDrawable = wm.getFastDrawable();
+		 * getWindow().setBackgroundDrawable(wallpaperDrawable); break; }//switch
 		 */
 		// ....................................
 		mBtnSync = (Button) findViewById(R.id.btnSync);
@@ -82,8 +75,7 @@ public class LibraryActivity extends FragmentActivity implements
 		mBtnMenu = (Button) findViewById(R.id.btnMenu);
 		mBtnMenu.setOnClickListener(this);
 
-		mSpinAdapter = new ArrayAdapter<String>(this, R.layout.spinner_item,
-				this.getResources().getStringArray(R.array.libraryFilter));
+		mSpinAdapter = new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.libraryFilter));
 		mSpFilter = (Spinner) findViewById(R.id.spFilter);
 		mSpFilter.setOnItemSelectedListener(this);
 		mSpFilter.setAdapter(mSpinAdapter);
@@ -95,12 +87,10 @@ public class LibraryActivity extends FragmentActivity implements
 		// ....................................
 		// Load state of filter from Bundle
 		if (savedInstanceState != null) {
-			mGridView.setSeriesFilter(savedInstanceState
-					.getString("mSeriesFilter"));
+			mGridView.setSeriesFilter(savedInstanceState.getString("mSeriesFilter"));
 			mGridView.setFilterMode(savedInstanceState.getInt("mFilterMode"));
 		} else {// if no state, load in default pref.
-			mGridView.setFilterMode(Integer.parseInt(prefs.getString(
-					"libraryFilter", "0")));
+			mGridView.setFilterMode(Integer.parseInt(prefs.getString("libraryFilter", "0")));
 		}// if
 
 		mSpFilter.setSelection(mGridView.getFilterMode());
@@ -145,8 +135,7 @@ public class LibraryActivity extends FragmentActivity implements
 	 */
 	// @Override
 	@Override
-	public void onItemSelected(AdapterView<?> parent, View view, int pos,
-			long id) {
+	public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 		if (mGridView.getFilterMode() != pos) {// initially, refreshdata gets
 												// called twice,its a waste.
 			mGridView.setFilterMode(pos);
@@ -181,8 +170,7 @@ public class LibraryActivity extends FragmentActivity implements
 	 * ======================================================== Context menu
 	 */
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		switch (v.getId()) {
 		case R.id.lvMain:
 			mGridView.createContextMenu(menu, v, menuInfo);
@@ -213,14 +201,12 @@ public class LibraryActivity extends FragmentActivity implements
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.btnSync:
-			sage.ui.Dialogs.ConfirmBox(this, "Sync Library",
-					"Are you sure you want sync the library?",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int id) {
-							startSync();
-						}
-					});
+			sage.ui.Dialogs.ConfirmBox(this, "Sync Library", "Are you sure you want sync the library?", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int id) {
+					startSync();
+				}
+			});
 
 			break;
 		case R.id.btnMenu:
@@ -251,8 +237,7 @@ public class LibraryActivity extends FragmentActivity implements
 
 			mProgress = ProgressDialog.show(this, "Library Syncing", "", true);
 		} else {
-			Toast.makeText(this, "Sync did not start", Toast.LENGTH_SHORT)
-					.show();
+			Toast.makeText(this, "Sync did not start", Toast.LENGTH_SHORT).show();
 		}// if
 	}// func
 
@@ -275,8 +260,7 @@ public class LibraryActivity extends FragmentActivity implements
 				mProgress = null;
 			}// if
 		} catch (Exception e) {
-			Toast.makeText(this, "Error closing progress dialog",
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "Error closing progress dialog", Toast.LENGTH_LONG).show();
 		}// try
 
 		// ............................................
@@ -285,9 +269,7 @@ public class LibraryActivity extends FragmentActivity implements
 			mGridView.refreshData();
 			break;
 		case ComicLibrary.STATUS_NOSETTINGS:
-			Toast.makeText(this,
-					"No sync folders have been set. Go to settings.",
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "No sync folders have been set. Go to settings.", Toast.LENGTH_LONG).show();
 			break;
 		}// switch
 	}// func
@@ -301,8 +283,7 @@ public class LibraryActivity extends FragmentActivity implements
 
 		if (mGridView.isSeriesFiltered()) {// Filter by series
 			if (!mGridView.getSeriesFilter().isEmpty()) {
-				mSeriesLbl.setText(mGridView.getSeriesFilter() + " [ "
-						+ Integer.toString(mGridView.recordCount) + " ]");
+				mSeriesLbl.setText(mGridView.getSeriesFilter() + " [ " + Integer.toString(mGridView.recordCount) + " ]");
 				mSeriesLbl.setVisibility(View.VISIBLE);
 			}// if
 		}// if
