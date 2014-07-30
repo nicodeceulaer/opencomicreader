@@ -68,6 +68,9 @@
 	    <CheckBoxPreference android:key="preLoading" android:title="Preload Next Page" android:defaultValue="false"
 	        android:summary="This feature speeds up page loading, but if there is out of memory issues then disable this feature."/>
 	    
+	    <CheckBoxPreference android:key="openNextComicOnEnd" android:title="Open next comic in series when reached end of file" android:defaultValue="true"
+	        android:summary="Use this feature if you don't like coming back to library after each comic."/>
+	    
 	    <CheckBoxPreference android:key="keepScreenOn" android:title="Keep Screen On" android:defaultValue="true"
 	        android:summary="Prevent screen from timing out while viewing a comic."/>
 	</PreferenceCategory>

@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -35,9 +36,7 @@ import com.sketchpunk.ocomicreader.ui.GestureImageView.OnKeyDownListener;
 //http://stackoverflow.com/questions/10185898/using-disklrucache-in-android-4-0-does-not-provide-for-opencache-method
 //https://github.com/JakeWharton/DiskLruCache/tree/master/src/main/java/com/jakewharton/disklrucache
 
-public class ViewActivity extends Activity implements
-		ComicLoader.ComicLoaderListener,
-		GestureImageView.OnImageGestureListener, OnKeyDownListener,
+public class ViewActivity extends Activity implements ComicLoader.ComicLoaderListener, GestureImageView.OnImageGestureListener, OnKeyDownListener,
 		DialogInterface.OnClickListener {
 
 	// TODO, Some of these things need to exist in a RetainFragment.
@@ -50,6 +49,7 @@ public class ViewActivity extends Activity implements
 	private Boolean mPref_ShowPgNum = true;
 	private Boolean mPref_ReadRight = true;
 	private Boolean mPref_FullScreen = true;
+	private Boolean mPref_openNextComicOnEnd = true;
 
 	// ------------------------------------------------------------------------
 	// Activty Events
@@ -62,11 +62,12 @@ public class ViewActivity extends Activity implements
 		// TODO Make sure scale is set from Preferences
 		// ........................................
 		// Get preferences
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		mPref_ShowPgNum = prefs.getBoolean("showPageNum", true);
 		mPref_FullScreen = prefs.getBoolean("fullScreen", true);
 		mPref_ReadRight = prefs.getBoolean("readToRight", true);
+		mPref_openNextComicOnEnd = prefs.getBoolean("openNextComicOnEnd", true);
+
 		int scaleMode = Integer.parseInt(prefs.getString("scaleMode", "3"));
 
 		// Set activity features
@@ -106,20 +107,15 @@ public class ViewActivity extends Activity implements
 
 			mDb = new Sqlite(this);
 			mDb.openRead();
-			Map<String, String> dbData = mDb
-					.scalarRow(
-							"SELECT path,pgCurrent FROM ComicLibrary WHERE comicID = ?",
-							new String[] { mComicID });
+			Map<String, String> dbData = mDb.scalarRow("SELECT path,pgCurrent FROM ComicLibrary WHERE comicID = ?", new String[] { mComicID });
 
 			filePath = dbData.get("path");
-			currentPage = Math
-					.max(Integer.parseInt(dbData.get("pgCurrent")), 0);
+			currentPage = Math.max(Integer.parseInt(dbData.get("pgCurrent")), 0);
 		}// if
 
 		// .........................................
 		mImageView = (GestureImageView) this.findViewById(R.id.pageView);
-		mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT
-				: ImgTransform.INITPAN_RIGHT);
+		mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
 		mImageView.setScaleMode(scaleMode);
 		registerForContextMenu(mImageView);
 
@@ -130,8 +126,7 @@ public class ViewActivity extends Activity implements
 				showToast("Loading Page...", 1);
 			mComicLoad.gotoPage(currentPage); // Continue where user left off
 		} else {
-			Toast.makeText(this, "Unable to load comic.", Toast.LENGTH_LONG)
-					.show();
+			Toast.makeText(this, "Unable to load comic.", Toast.LENGTH_LONG).show();
 		}// if
 	}// func
 
@@ -182,8 +177,7 @@ public class ViewActivity extends Activity implements
 	// ------------------------------------------------------------------------
 	// Menu Events
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		getMenuInflater().inflate(R.menu.activity_view, menu);
 		menu.setHeaderTitle("Options");
@@ -235,22 +229,17 @@ public class ViewActivity extends Activity implements
 			break;
 
 		case R.id.mnu_orientationd:
-			ActivityUtil.setScreenOrientation(this,
-					ActivityUtil.ORIENTATION_DEVICE);
+			ActivityUtil.setScreenOrientation(this, ActivityUtil.ORIENTATION_DEVICE);
 			break;
 		case R.id.mnu_orientationp:
-			ActivityUtil.setScreenOrientation(this,
-					ActivityUtil.ORIENTATION_PORTRAIT);
+			ActivityUtil.setScreenOrientation(this, ActivityUtil.ORIENTATION_PORTRAIT);
 			break;
 		case R.id.mnu_orientationl:
-			ActivityUtil.setScreenOrientation(this,
-					ActivityUtil.ORIENTATION_LANDSCAPE);
+			ActivityUtil.setScreenOrientation(this, ActivityUtil.ORIENTATION_LANDSCAPE);
 			break;
 
 		case R.id.mnu_goto:
-			sage.ui.Dialogs.NumPicker(this, "Goto Page", 1,
-					mComicLoad.getPageCount(), mComicLoad.getCurrentPage() + 1,
-					this);
+			sage.ui.Dialogs.NumPicker(this, "Goto Page", 1, mComicLoad.getPageCount(), mComicLoad.getCurrentPage() + 1, this);
 			break;
 		case R.id.mnu_exit:
 			this.finish();
@@ -258,9 +247,7 @@ public class ViewActivity extends Activity implements
 
 		case R.id.mnu_readright:
 			mPref_ReadRight = (!mPref_ReadRight);
-			mImageView
-					.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT
-							: ImgTransform.INITPAN_RIGHT);
+			mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
 			break;
 
 		case R.id.mnu_immersive:
@@ -334,8 +321,7 @@ public class ViewActivity extends Activity implements
 
 				// Save update
 				String cp = Integer.toString(currentPage);
-				String sql = "UPDATE ComicLibrary SET pgCurrent=" + cp
-						+ ", pgRead=CASE WHEN pgRead < " + cp + " THEN " + cp
+				String sql = "UPDATE ComicLibrary SET pgCurrent=" + cp + ", pgRead=CASE WHEN pgRead < " + cp + " THEN " + cp
 						+ " ELSE pgRead END WHERE comicID = '" + mComicID + "'";
 				mDb.execSql(sql, null);
 			}// if
@@ -343,9 +329,7 @@ public class ViewActivity extends Activity implements
 			// ....................................
 			// Display page number
 			if (this.mPref_ShowPgNum)
-				showToast(
-						String.format("%d / %d", currentPage + 1,
-								mComicLoad.getPageCount()), 0);
+				showToast(String.format("%d / %d", currentPage + 1, mComicLoad.getPageCount()), 0);
 		}// if
 	}// func
 
@@ -414,38 +398,71 @@ public class ViewActivity extends Activity implements
 	private final static boolean loadNextComicOnFileEnd = false;
 	private void processStatus(int status, Direction direction) {
 		if (status == 0) {
-			if(loadNextComicOnFileEnd) {
-				Intent intent = new Intent(mImageView.getContext(), ViewActivity.class);
-				String sql = "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
-				SqlCursorLoader cursorLoader = new SqlCursorLoader(mImageView.getContext(),
-						mDb);
-				cursorLoader.setRaw(sql);
-				
-				intent.putExtra("comicid", mComicID+1);
-				((FragmentActivity) mImageView.getContext()).startActivityForResult(
-						intent, 0);
+			boolean firstPage = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT && !mPref_ReadRight);
+			String comicToLoad = null;
+
+			if (mPref_openNextComicOnEnd) {
+				comicToLoad = determineComicToLoad(firstPage);
+			}
+
+			if (comicToLoad != null) {
+				moveToAnotherComic(comicToLoad);
 			} else {
-			String msg = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT
-					&& !mPref_ReadRight) ? "FIRST PAGE" : "LAST PAGE";
-			showToast(msg, 1);
+				String msg = firstPage ? "FIRST PAGE" : "LAST PAGE";
+				showToast(msg, 1);
+			}
 			}
 		} else if (status == -1) {
 			showToast("Still Preloading, Try again in one second", 1);
 		}
 	}
 
+	private void moveToAnotherComic(String comicId) {
+		Intent intent = new Intent(this, ViewActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		intent.putExtra("comicid", comicId);
+		this.startActivity(intent);
+	}
+
+	private String determineComicToLoad(boolean firstPage) {
+		String result = null;
+		mDb.openRead();
+		String sql = String.format("SELECT * FROM ComicLibrary WHERE comicID = '%1$s'", mComicID);
+		Cursor cursor = mDb.raw(sql, null);
+		if (cursor != null && cursor.moveToFirst()) {
+			int seriesColumn = cursor.getColumnIndex("series");
+			String series = cursor.getString(seriesColumn);
+			int titleColumn = cursor.getColumnIndex("title");
+			String title = cursor.getString(titleColumn);
+			cursor.close();
+
+			if (firstPage) {
+				sql = String.format("SELECT * FROM ComicLibrary WHERE title < '%1$s' AND series = '%2$s' ORDER BY title DESC LIMIT 1", title, series);
+			} else {
+				sql = String.format("SELECT * FROM ComicLibrary WHERE title > '%1$s' AND series = '%2$s' ORDER BY title ASC LIMIT 1", title, series);
+			}
+			cursor = mDb.raw(sql, null);
+			if (cursor != null && cursor.moveToFirst()) {
+				int idColumn = cursor.getColumnIndex("comicID");
+				result = cursor.getString(idColumn);
+				cursor.close();
+			}
+		}
+		mDb.close();
+		return result;
+	}
+
 	private int turnPageRight() {
 		if (this.mPref_ShowPgNum) {
 			showToast("Loading Page...", 1);
 		}
-		return (mPref_ReadRight) ? mComicLoad.nextPage() : mComicLoad
-				.prevPage();
+		return (mPref_ReadRight) ? mComicLoad.nextPage() : mComicLoad.prevPage();
 	}
 
 	private boolean progressPageRight() {
 		boolean shifted;
-		shifted = (mPref_ReadRight) ? mImageView.shiftRight() : mImageView
-				.shiftLeft_rev();
+		shifted = (mPref_ReadRight) ? mImageView.shiftRight() : mImageView.shiftLeft_rev();
 		return shifted;
 	}
 
@@ -453,13 +470,11 @@ public class ViewActivity extends Activity implements
 		if (this.mPref_ShowPgNum) {
 			showToast("Loading Page...", 1);
 		}
-		return (mPref_ReadRight) ? mComicLoad.prevPage() : mComicLoad
-				.nextPage();
+		return (mPref_ReadRight) ? mComicLoad.prevPage() : mComicLoad.nextPage();
 	}
 
 	private boolean progressPageLeft() {
-		return (!mPref_ReadRight) ? mImageView.shiftLeft() : mImageView
-				.shiftRight_rev();
+		return (!mPref_ReadRight) ? mImageView.shiftLeft() : mImageView.shiftRight_rev();
 	}
 
 	// ------------------------------------------------------------------------

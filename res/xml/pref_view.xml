@@ -12,6 +12,9 @@
     
 	<CheckBoxPreference android:key="fullScreen" android:title="Fullscreen" android:defaultValue="false"
         android:summary="Display comics at full screen. Tap and hold for options to exit when there is no virtual buttons."/>
+	
+	<CheckBoxPreference android:key="openNextComicOnEnd" android:title="Open next comic in series when reached end of file" android:defaultValue="true"
+        android:summary="Use this feature if you don't like coming back to library after each comic."/>
     
     <CheckBoxPreference android:key="keepScreenOn" android:title="Keep Screen On" android:defaultValue="true"
         android:summary="Prevent screen from timing out while viewing a comic."/>
