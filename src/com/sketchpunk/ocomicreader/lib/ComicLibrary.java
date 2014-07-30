@@ -8,7 +8,6 @@ import java.util.Locale;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
-import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -274,28 +273,54 @@ public class ComicLibrary {
 		}// if
 
 		// ................................................
-		sage.data.Sqlite.execSql(context, "UPDATE ComicLibrary SET isCoverExists=0", null);
+		getComicDao(context);
+
+		UpdateBuilder<Comic, Integer> comicUpdate = comicDao.updateBuilder();
+		try {
+			comicUpdate.updateColumnValue("coverExists", 0);
+			comicUpdate.update();
+		} catch (SQLException e) {
+			Log.e("sql", e.getLocalizedMessage());
+		}
+
+		OpenHelperManager.releaseHelper();
 	}// func
 
 	/*
 	 * ======================================================== Manage Series
 	 */
-	public static void setSeriesName(Context context, String comicID, String seriesName) {
-		ContentValues cv = new ContentValues();
-		cv.put("series", seriesName);
-		sage.data.Sqlite.update(context, "ComicLibrary", cv, "comicID=?", new String[] { comicID });
+	public static void setSeriesName(Context context, Integer comicID, String seriesName) {
+		getComicDao(context);
+
+		Comic comicToUpdate = comicDao.queryForId(comicID);
+		comicToUpdate.setSeries(seriesName);
+		comicDao.update(comicToUpdate);
+
+		OpenHelperManager.releaseHelper();
 	}// func
 
 	public static void renameSeries(Context context, String oldSeries, String newSeries) {
-		ContentValues cv = new ContentValues();
-		cv.put("series", newSeries);
-		sage.data.Sqlite.update(context, "ComicLibrary", cv, "series=?", new String[] { oldSeries });
+		UpdateBuilder<Comic, Integer> comicUpdate = comicDao.updateBuilder();
+		try {
+			comicUpdate.updateColumnValue("series", newSeries).where().eq("series", oldSeries);
+			comicUpdate.update();
+		} catch (SQLException e) {
+			Log.e("sql", e.getLocalizedMessage());
+		}
+
+		OpenHelperManager.releaseHelper();
 	}// func
 
 	public static void clearSeries(Context context) {
-		ContentValues cv = new ContentValues();
-		cv.put("series", ComicLibrary.UKNOWN_SERIES);
-		sage.data.Sqlite.update(context, "ComicLibrary", cv, null, null);
+		UpdateBuilder<Comic, Integer> comicUpdate = comicDao.updateBuilder();
+		try {
+			comicUpdate.updateColumnValue("series", null);
+			comicUpdate.update();
+		} catch (SQLException e) {
+			Log.e("sql", e.getLocalizedMessage());
+		}
+
+		OpenHelperManager.releaseHelper();
 	}// func
 
 	// ************************************************************
