@@ -26,12 +26,10 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		if (ext.equals("zip") || ext.equals("cbz")) {
 			o = new ComicZip();
-			loadFile(path, o);
-			o.close();
+			return loadFile(path, o);
 		} else if (ext.equals("rar") || ext.equals("cbr")) {
 			o = new ComicRar();
-			loadFile(path, o);
-			o.close();
+			return loadFile(path, o);
 		} else {
 			if (new File(path).isDirectory()) {
 				o = new ComicFld();
@@ -43,11 +41,12 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	}// func
 
 	private static iComicArchive loadFile(String path, iComicArchive o) {
-		o.setFileNameComparator(Strings.getNaturalComparator(false));
+		o.setFileNameComparator(Strings.getNaturalComparator(true));
 		if (o.loadFile(path)) {
 			return o;
-		}
+		} else {
 		return null;
+		}
 	}
 
 	/*--------------------------------------------------------

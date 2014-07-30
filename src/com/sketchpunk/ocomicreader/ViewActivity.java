@@ -2,6 +2,7 @@ package com.sketchpunk.ocomicreader;
 
 import java.util.Map;
 
+import sage.data.SqlCursorLoader;
 import sage.data.Sqlite;
 import sage.ui.ActivityUtil;
 import android.annotation.SuppressLint;
@@ -13,6 +14,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -409,11 +411,24 @@ public class ViewActivity extends Activity implements
 		}
 	}
 
+	private final static boolean loadNextComicOnFileEnd = false;
 	private void processStatus(int status, Direction direction) {
 		if (status == 0) {
+			if(loadNextComicOnFileEnd) {
+				Intent intent = new Intent(mImageView.getContext(), ViewActivity.class);
+				String sql = "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
+				SqlCursorLoader cursorLoader = new SqlCursorLoader(mImageView.getContext(),
+						mDb);
+				cursorLoader.setRaw(sql);
+				
+				intent.putExtra("comicid", mComicID+1);
+				((FragmentActivity) mImageView.getContext()).startActivityForResult(
+						intent, 0);
+			} else {
 			String msg = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT
 					&& !mPref_ReadRight) ? "FIRST PAGE" : "LAST PAGE";
 			showToast(msg, 1);
+			}
 		} else if (status == -1) {
 			showToast("Still Preloading, Try again in one second", 1);
 		}

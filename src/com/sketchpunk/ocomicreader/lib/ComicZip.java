@@ -52,8 +52,9 @@ public class ComicZip implements iComicArchive {
 	public boolean loadFile(String path) {
 		try {
 			mArchive = new ZipFile(path);
-			return true;
+			return true; 
 		} catch (Exception e) {
+			System.out.println("Couldn't open zip at path " + path);
 		}// try;
 		return false;
 	}// func
