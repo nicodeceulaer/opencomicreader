@@ -1,0 +1,55 @@
+#
+# generated on 2014/07/30 04:46:38
+#
+# --table-start--
+dataClass=sage.data.domain.Comic
+tableName=comics
+# --table-fields-start--
+# --field-start--
+fieldName=id
+id=true
+# --field-end--
+# --field-start--
+fieldName=title
+# --field-end--
+# --field-start--
+fieldName=path
+# --field-end--
+# --field-start--
+fieldName=coverExists
+# --field-end--
+# --field-start--
+fieldName=pageCount
+# --field-end--
+# --field-start--
+fieldName=pageRead
+# --field-end--
+# --field-start--
+fieldName=pageCurrent
+# --field-end--
+# --field-start--
+fieldName=series
+# --field-end--
+# --field-start--
+fieldName=issue
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=sage.data.domain.ReadingHistory
+tableName=reading_history
+# --table-fields-start--
+# --field-start--
+fieldName=id
+id=true
+# --field-end--
+# --field-start--
+fieldName=comic
+# --field-end--
+# --field-start--
+fieldName=date
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################

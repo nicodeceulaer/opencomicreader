@@ -45,8 +45,6 @@ public class SqliteHelper extends SQLiteOpenHelper {
 				db.execSQL("ALTER TABLE ComicLibrary ADD COLUMN series VARCHAR(300) NULL;");
 				break;
 			case 3:
-				db.execSQL("CREATE TABLE IF NOT EXISTS [ReadingHistory](" + "id INT PRIMARY KEY NOT NULL AUTO_INCREMENT" + ",comicID VARCHAR(40) NOT NULL"
-						+ ",date DATETIME DEFAULT CURRENT_TIMESTAMP");
 				break;
 			}// if
 		}// for

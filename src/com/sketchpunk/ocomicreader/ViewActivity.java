@@ -1,8 +1,10 @@
 package com.sketchpunk.ocomicreader;
 
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.List;
 
-import sage.data.Sqlite;
+import sage.data.DatabaseHelper;
+import sage.data.domain.Comic;
 import sage.ui.ActivityUtil;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -10,10 +12,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -23,6 +25,9 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.sketchpunk.ocomicreader.enums.Direction;
 import com.sketchpunk.ocomicreader.lib.ComicLoader;
 import com.sketchpunk.ocomicreader.lib.ImgTransform;
@@ -41,13 +46,15 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	private GestureImageView mImageView; // Main display of image
 	private ComicLoader mComicLoad; // Object that will manage streaming and
 									// scaling images out of the archive file
-	private String mComicID = "";
-	private Sqlite mDb = null;
+	private Integer mComicID = null;
 	private Toast mToast;
 	private Boolean mPref_ShowPgNum = true;
 	private Boolean mPref_ReadRight = true;
 	private Boolean mPref_FullScreen = true;
 	private Boolean mPref_openNextComicOnEnd = true;
+
+	RuntimeExceptionDao<Comic, Integer> comicDao = null;
+	Comic currentComic = null;
 
 	// ------------------------------------------------------------------------
 	// Activty Events
@@ -95,20 +102,20 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		int currentPage = 0;
 		String filePath = "";
 
+		getComicDao();
+
 		Intent intent = this.getIntent();
 		Uri uri = intent.getData();
 		if (uri != null) {
 			filePath = Uri.decode(uri.toString().replace("file://", ""));
 		} else {
 			Bundle b = intent.getExtras();
-			mComicID = b.getString("comicid");
+			mComicID = b.getInt("comicid");
 
-			mDb = new Sqlite(this);
-			mDb.openRead();
-			Map<String, String> dbData = mDb.scalarRow("SELECT path,pgCurrent FROM ComicLibrary WHERE comicID = ?", new String[] { mComicID });
+			currentComic = comicDao.queryForId(mComicID);
 
-			filePath = dbData.get("path");
-			currentPage = Math.max(Integer.parseInt(dbData.get("pgCurrent")), 0);
+			filePath = currentComic.getPath();
+			currentPage = Math.max(currentComic.getPageCurrent(), 0);
 		}// if
 
 		// .........................................
@@ -128,12 +135,14 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		}// if
 	}// func
 
+	private void getComicDao() {
+		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
+		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+	}
+
 	@Override
 	public void onDestroy() {
-		if (mDb != null) {
-			mDb.close();
-			mDb = null;
-		}
+		OpenHelperManager.releaseHelper();
 		mComicLoad.close();
 		super.onDestroy();
 	}// func
@@ -146,10 +155,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	@Override
 	public void onResume() {
 		super.onResume();
-		if (mDb == null)
-			mDb = new Sqlite(this);
-		if (!mDb.isOpen())
-			mDb.openRead();
+
+		if (comicDao == null) {
+			getComicDao();
+		}
 
 		if (mPref_FullScreen)
 			ActivityUtil.setImmersiveModeOn(this);
@@ -159,17 +168,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	public void onConfigurationChanged(Configuration config) {
 		super.onConfigurationChanged(config);
 
-		// The view's new values aren't known yet till it has been redrawn onto
-		// the screen.
-		// So wait till its ready before appying the change event to the
-		// imageview.
-		// ViewTreeObserver observer = mImageView.getViewTreeObserver();
-		// observer.addOnGlobalLayoutListener(new OnGlobalLayoutListener(){
-		// @Override public void onGlobalLayout() {
-		// mImageView.configChange();
-		// mImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-		// }//func
-		// });
 	}// func
 
 	// ------------------------------------------------------------------------
@@ -310,18 +308,13 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	@Override
 	public void onPageLoaded(boolean isSuccess, int currentPage) {
 		if (isSuccess) { // Save reading progress.
-			if (mComicID != "") {
-				// Make sure database is open
-				if (mDb == null)
-					mDb = new Sqlite(this);
-				if (!mDb.isOpen())
-					mDb.openRead();
+			if (currentComic != null) {
 
-				// Save update
-				String cp = Integer.toString(currentPage);
-				String sql = "UPDATE ComicLibrary SET pgCurrent=" + cp + ", pgRead=CASE WHEN pgRead < " + cp + " THEN " + cp
-						+ " ELSE pgRead END WHERE comicID = '" + mComicID + "'";
-				mDb.execSql(sql, null);
+				currentComic.setPageCurrent(currentPage);
+				if (currentComic.getPageRead() < currentPage) {
+					currentComic.setPageRead(currentPage);
+				}
+				comicDao.update(currentComic);
 			}// if
 
 			// ....................................
@@ -396,7 +389,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	private void processStatus(int status, Direction direction) {
 		if (status == 0) {
 			boolean firstPage = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT && !mPref_ReadRight);
-			String comicToLoad = null;
+			Integer comicToLoad = null;
 
 			if (mPref_openNextComicOnEnd) {
 				comicToLoad = determineComicToLoad(firstPage);
@@ -413,7 +406,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		}
 	}
 
-	private void moveToAnotherComic(String comicId) {
+	private void moveToAnotherComic(Integer comicId) {
 		Intent intent = new Intent(this, ViewActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -421,31 +414,29 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		this.startActivity(intent);
 	}
 
-	private String determineComicToLoad(boolean firstPage) {
-		String result = null;
-		mDb.openRead();
-		String sql = String.format("SELECT * FROM ComicLibrary WHERE comicID = '%1$s'", mComicID);
-		Cursor cursor = mDb.raw(sql, null);
-		if (cursor != null && cursor.moveToFirst()) {
-			int seriesColumn = cursor.getColumnIndex("series");
-			String series = cursor.getString(seriesColumn);
-			int titleColumn = cursor.getColumnIndex("title");
-			String title = cursor.getString(titleColumn);
-			cursor.close();
+	private Integer determineComicToLoad(boolean firstPage) {
+		Integer result = null;
 
-			if (firstPage) {
-				sql = String.format("SELECT * FROM ComicLibrary WHERE title < '%1$s' AND series = '%2$s' ORDER BY title DESC LIMIT 1", title, series);
-			} else {
-				sql = String.format("SELECT * FROM ComicLibrary WHERE title > '%1$s' AND series = '%2$s' ORDER BY title ASC LIMIT 1", title, series);
-			}
-			cursor = mDb.raw(sql, null);
-			if (cursor != null && cursor.moveToFirst()) {
-				int idColumn = cursor.getColumnIndex("comicID");
-				result = cursor.getString(idColumn);
-				cursor.close();
+		if (currentComic != null) {
+			QueryBuilder<Comic, Integer> queryBuilder = comicDao.queryBuilder();
+
+			try {
+				if (firstPage) {
+					queryBuilder.orderBy("title", false).limit(1L).where().lt("id", currentComic.getId());
+				} else {
+					queryBuilder.orderBy("title", true).limit(1L).where().gt("id", currentComic.getId());
+				}
+
+				List<Comic> comics = queryBuilder.query();
+
+				if (comics != null && comics.size() > 0) {
+					result = comics.get(0).getId();
+				}
+			} catch (SQLException e) {
+				Log.e("sql", e.getMessage());
 			}
 		}
-		mDb.close();
+
 		return result;
 	}
 
