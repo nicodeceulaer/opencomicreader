@@ -9,6 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 import sage.io.DiskCache;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.opengl.GLES10;
 import android.os.AsyncTask;
 import android.widget.Toast;
@@ -84,7 +85,18 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		// time.
 		android.opengl.GLSurfaceView mGLView = new android.opengl.GLSurfaceView(context);
 		int[] maxTextureSize = new int[1];
+
+		Canvas canvas = new Canvas();
+		int a = canvas.getMaximumBitmapHeight();
+		int b = canvas.getMaximumBitmapWidth();
 		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
+		if (a > b) {
+			a = b;
+		}
+		if (a > maxTextureSize[0]) {
+			maxTextureSize[0] = a;
+		}
+		// Test whenever this way of detemrining maximum texture size would work
 
 		mMaxSize = maxTextureSize[0]; // MaxTextureSize
 	}// func
