@@ -1,8 +1,11 @@
 package com.sketchpunk.ocomicreader.ui;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import sage.adapter.ComicGridAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
 import sage.loader.LoadImageView;
@@ -27,7 +30,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -48,7 +50,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}
 
 	private final String TAG = "COVERGRIDVIEW";
-	private ArrayAdapter<Comic> mAdapter;
+	private ComicGridAdapter mAdapter;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
 
 	public int recordCount = 0;
@@ -62,7 +64,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	private int mGridPadding = 0;
 	private int mGridColNum = 2;
 
-	private boolean mIsFirstRun = true;
+	private final boolean mIsFirstRun = true;
 	private String mThumbPath;
 
 	public CoverGridView(Context context) {
@@ -93,7 +95,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// set values
 		mThumbPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/OpenComicReader/thumbs/";
 
-		mAdapter = new ArrayAdapter<Comic>(this.getContext(), R.layout.listitem_library);
+		mAdapter = new ComicGridAdapter(this.getContext(), R.layout.listitem_library, getData());
 
 		this.setNumColumns(mGridColNum);
 		this.setPadding(mGridPadding, mGridPadding + mTopPadding, mGridPadding, mGridPadding);
@@ -149,35 +151,41 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	@Override
 	// ComicCover.onClick
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		AdapterItemRef itmRef = (AdapterItemRef) view.getTag();
+		Comic comic = mAdapter.getItem(position);
 
 		if (isSeriesFiltered() && mSeriesFilter.isEmpty()) { // if series if
 																// selected but
 																// not filtered
 																// yet.
-			mSeriesFilter = itmRef.series;
+			mSeriesFilter = comic.getSeries();
 			refreshData();
 		} else { // Open comic in viewer.
 			Intent intent = new Intent(this.getContext(), ViewActivity.class);
-			intent.putExtra("comicid", itmRef.id);
+			intent.putExtra("comicid", comic.getId());
 			((FragmentActivity) this.getContext()).startActivityForResult(intent, 0);
 		}// if
 	}// func
 
+	public void refreshData() {
+		// TODO Auto-generated method stub
+
+	}
+
 	/*
 	 * ======================================================== Cursor Loader : LoaderManager.LoaderCallbacks<Cursor>
 	 */
-	public void refreshData() {
-		if (!mIsFirstRun) {
-			if (comicDao == null) {
-				getComicDao();
-			}
+	private List<Comic> getData() {
+		List<Comic> imageItems = new ArrayList<Comic>();
 
-			// TODO: refresh data here
-			// getLoaderManager().restartLoader(0, null, this);
-		} else
-			mIsFirstRun = false;
-	}// func
+		if (comicDao == null) {
+			getComicDao();
+		}
+
+		imageItems = comicDao.queryForAll();
+
+		return imageItems;
+
+	}
 
 	@Override
 	public Loader<Collection<Comic>> onCreateLoader(int id, Bundle arg) {

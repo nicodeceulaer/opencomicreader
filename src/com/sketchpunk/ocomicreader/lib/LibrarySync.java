@@ -68,18 +68,19 @@ public class LibrarySync implements Runnable {
 					@Override
 					public Void call() throws Exception {
 						crawlComicFiles();
-						if (mIncImgFlds)
+						if (mIncImgFlds) {
 							crawlComicFolders();
+						}
 						return null;
 					}
 				});
-			}// if
+			}
 
 			processLibrary();
 		} catch (Exception e) {
 			System.err.println("Sync " + e.getMessage());
 			e.printStackTrace();
-		}// try
+		}
 
 		// .....................................
 		// Complete
@@ -242,7 +243,7 @@ public class LibrarySync implements Runnable {
 		comicToSave.setTitle(title);
 		comicToSave.setPath(path);
 		comicToSave.setSeries(ComicLibrary.UKNOWN_SERIES);
-		comicDao.update(comicToSave);
+		comicDao.create(comicToSave);
 	}
 
 	/*
@@ -252,7 +253,7 @@ public class LibrarySync implements Runnable {
 		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
 		String[] comicMeta; // Title,Series,Volume,Issue
 		File file;
-		String tmp, sql, comicPath, seriesName;
+		String comicPath, seriesName;
 		Integer comicID;
 		iComicArchive archive;
 
@@ -283,10 +284,12 @@ public class LibrarySync implements Runnable {
 
 			// .........................................
 			// if thumb has not been generated.
-			if (comic.isCoverExists()) {
+			if (!comic.isCoverExists()) {
 				sendProgress("Creating thumbnail for " + comicPath);
 				archive = ComicLoader.getArchiveInstance(comicPath);
 				archive.getLibraryData(comicInfo);
+
+				comic.setPageCount(Integer.parseInt(comicInfo[0]));
 
 				// No images in archive, then delete
 				if (comic.getPageCount() == 0) {
@@ -294,7 +297,6 @@ public class LibrarySync implements Runnable {
 					continue;
 				}// if
 
-				comic.setPageCount(Integer.parseInt(comicInfo[0]));
 				// Create ThumbNail
 				if (ComicLibrary.createThumb(mCoverHeight, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
 					comic.setCoverExists(true);

@@ -1,12 +1,16 @@
 package sage.data.domain;
 
+import java.io.Serializable;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "comics")
-public class Comic {
+public class Comic implements Serializable {
 
-	@DatabaseField(id = true)
+	private static final long serialVersionUID = -3439184021177920049L;
+
+	@DatabaseField(generatedId = true)
 	private int id;
 
 	@DatabaseField
@@ -32,6 +36,10 @@ public class Comic {
 
 	@DatabaseField
 	private int issue;
+
+	public Comic() {
+
+	}
 
 	public int getId() {
 		return id;

@@ -4,16 +4,16 @@ import java.io.File;
 import java.util.List;
 import java.util.Locale;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import sage.io.DiskCache;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.opengl.GLES10;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import com.sketchpunk.ocomicreader.OpenGLESTestingActivity;
 import com.sketchpunk.ocomicreader.ui.GestureImageView;
 
 public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImageLoadingListener,LoadImageView.OnImageLoadedListener{
@@ -55,7 +55,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 	private int mPageLen, mCurrentPage;
 
-	private final int mMaxSize;
+	private int mMaxSize;
 	private final int mPreloadSize = 2;
 	private ComicLoaderListener mListener;
 
@@ -72,6 +72,16 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		mContext = context;
 		mCache = new DiskCache(context, "comicLoader", CACHE_SIZE);
 
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		mMaxSize = prefs.getInt("maxTextureSize", 0);
+
+		if (mMaxSize == 0) {
+			Intent intent = new Intent(mContext, OpenGLESTestingActivity.class);
+			mContext.startActivity(intent);
+
+			mMaxSize = prefs.getInt("maxTextureSize", 2048); // 2048 should be safe for most devices
+		}
+
 		// ............................
 		// Save Callback
 		if (context instanceof ComicLoaderListener)
@@ -81,24 +91,6 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		mPageLoader = new PageLoader(this);
 		mCurrentPage = -1;
 
-		// TODO: Save this to settings, shouldn't have to get this value every
-		// time.
-		android.opengl.GLSurfaceView mGLView = new android.opengl.GLSurfaceView(context);
-		int[] maxTextureSize = new int[1];
-
-		Canvas canvas = new Canvas();
-		int a = canvas.getMaximumBitmapHeight();
-		int b = canvas.getMaximumBitmapWidth();
-		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
-		if (a > b) {
-			a = b;
-		}
-		if (a > maxTextureSize[0]) {
-			maxTextureSize[0] = a;
-		}
-		// Test whenever this way of detemrining maximum texture size would work
-
-		mMaxSize = maxTextureSize[0]; // MaxTextureSize
 	}// func
 
 	/*--------------------------------------------------------
@@ -249,8 +241,6 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	protected class CacheLoader extends AsyncTask<Integer, Void, Bitmap> {
 		@Override
 		protected Bitmap doInBackground(Integer... params) {
-			int pgIndex = params[0].intValue();
-
 			String pgPath = mPageList.get(mCurrentPage);
 			Bitmap bmp = mCache.getBitmap(pgPath);
 

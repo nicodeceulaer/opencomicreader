@@ -24,8 +24,6 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.sketchpunk.ocomicreader.PrefActivity;
-import com.sketchpunk.ocomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
@@ -100,6 +98,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		// ((RelativeLayout)findViewById(R.id.topBar)).getHeight();
 		mGridView.init();
 		registerForContextMenu(mGridView); // Route event from Activity to View
+
 	}// func
 
 	@Override

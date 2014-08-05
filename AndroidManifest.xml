@@ -67,6 +67,10 @@
             android:theme="@android:style/Theme.Holo.NoActionBar" >
         </activity>
         <activity
+            android:name="com.sketchpunk.ocomicreader.OpenGLESTestingActivity"
+            android:theme="@android:style/Theme.Holo.NoActionBar" >
+        </activity>
+        <activity
             android:name="com.sketchpunk.ocomicreader.LibraryActivity"
             android:label="Open Comic Reader"
             android:theme="@android:style/Theme.Holo.NoActionBar">
