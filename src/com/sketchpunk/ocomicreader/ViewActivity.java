@@ -422,9 +422,9 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 			try {
 				if (firstPage) {
-					queryBuilder.orderBy("title", false).limit(1L).where().lt("id", currentComic.getId());
+					queryBuilder.orderBy("issue", false).limit(1L).where().lt("issue", currentComic.getIssue()).and().eq("series", currentComic.getSeries());
 				} else {
-					queryBuilder.orderBy("title", true).limit(1L).where().gt("id", currentComic.getId());
+					queryBuilder.orderBy("issue", true).limit(1L).where().gt("issue", currentComic.getIssue()).and().eq("series", currentComic.getSeries());
 				}
 
 				List<Comic> comics = queryBuilder.query();
