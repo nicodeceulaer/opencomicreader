@@ -387,7 +387,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		}
 	}
 
-	private final static boolean loadNextComicOnFileEnd = false;
 	private void processStatus(int status, Direction direction) {
 		if (status == 0) {
 			boolean firstPage = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT && !mPref_ReadRight);
@@ -402,7 +401,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			} else {
 				String msg = firstPage ? "FIRST PAGE" : "LAST PAGE";
 				showToast(msg, 1);
-			}
 			}
 		} else if (status == -1) {
 			showToast("Still Preloading, Try again in one second", 1);
