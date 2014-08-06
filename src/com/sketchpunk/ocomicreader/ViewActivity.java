@@ -2,6 +2,7 @@ package com.sketchpunk.ocomicreader;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
@@ -422,12 +423,30 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 			try {
 				if (firstPage) {
-					queryBuilder.orderBy("issue", false).limit(1L).where().lt("issue", currentComic.getIssue()).and().eq("series", currentComic.getSeries());
+					queryBuilder.orderBy("issue", false).limit(1L).where().lt("issue", currentComic.getIssue()).and()
+							.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
 				} else {
-					queryBuilder.orderBy("issue", true).limit(1L).where().gt("issue", currentComic.getIssue()).and().eq("series", currentComic.getSeries());
+					queryBuilder.orderBy("issue", true).limit(1L).where().gt("issue", currentComic.getIssue()).and()
+							.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
 				}
 
 				List<Comic> comics = queryBuilder.query();
+
+				if (comics == null || (comics != null && comics.size() == 0)) {
+					queryBuilder = comicDao.queryBuilder();
+
+					if (firstPage) {
+						queryBuilder.orderByRaw("LOWER(`title`) DESC").limit(1L).where()
+								.raw("LOWER(`title`) < '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'").and()
+								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
+					} else {
+						queryBuilder.orderByRaw("LOWER(`title`) ASC").limit(1L).where()
+								.raw("LOWER(`title`) > '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'")
+								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
+					}
+
+					comics = queryBuilder.query();
+				}
 
 				if (comics != null && comics.size() > 0) {
 					result = comics.get(0).getId();

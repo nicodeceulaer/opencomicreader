@@ -6,6 +6,7 @@ import java.lang.ref.WeakReference;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -83,24 +84,29 @@ public class LoadImageView {
 
 		@Override
 		protected Bitmap doInBackground(Object... params) {
-			imagePath = (String) params[0];
+			try {
+				imagePath = (String) params[0];
 
-			// .....................................
-			// If callback exists, then we need to load the image in a special sort of way.
-			if (mOnImageLoading != null) {
-				final OnImageLoadingListener callback = (OnImageLoadingListener) mOnImageLoading.get();
-				return (callback != null) ? callback.onImageLoading(imagePath) : null;
-			}// if
+				// .....................................
+				// If callback exists, then we need to load the image in a special sort of way.
+				if (mOnImageLoading != null) {
+					final OnImageLoadingListener callback = (OnImageLoadingListener) mOnImageLoading.get();
+					return (callback != null) ? callback.onImageLoading(imagePath) : null;
+				}// if
 
-			// .....................................
-			// if no callback, then load the image ourselves
-			File fImg = new File(imagePath);
-			if (!fImg.exists()) {
-				System.out.println("---Thumb File does not exist " + imagePath);
-				return null;
+				// .....................................
+				// if no callback, then load the image ourselves
+				File fImg = new File(imagePath);
+				if (!fImg.exists()) {
+					System.out.println("---Thumb File does not exist " + imagePath);
+					return null;
+				}
+
+				return BitmapFactory.decodeFile(imagePath, null);
+			} catch (OutOfMemoryError ex) {
+				Log.e("memory", "Coudln't load thumbnail file for " + imagePath + " due to OutOfMemoryError " + ex.getMessage());
 			}
-
-			return BitmapFactory.decodeFile(imagePath, null);
+			return null;
 		}// func
 
 		@Override

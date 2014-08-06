@@ -42,20 +42,20 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 					// sql =
 					// "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
 					GenericRawResults<String[]> rawResults = comicDao
-							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 1 GROUP BY series ORDER BY series");
+							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 1 GROUP BY LOWER(series) ORDER BY LOWER(series)");
 					data = new ArrayList<Comic>();
 					for (String[] resultArray : rawResults) {
 						Comic seriesResult = parseRawComicSeriesResults(resultArray);
 						data.add(seriesResult);
 					}
 					GenericRawResults<String[]> rawResultsWithoutCovers = comicDao
-							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 0 GROUP BY series ORDER BY series");
+							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 0 GROUP BY LOWER(series) ORDER BY LOWER(series)");
 
 					for (String[] resultArray : rawResultsWithoutCovers) {
 						Comic seriesResult = parseRawComicSeriesResults(resultArray);
 						boolean alreadyFound = false;
 						for (Comic comic : data) {
-							if (comic.getSeries().equals(seriesResult.getSeries())) {
+							if (comic.getSeries() != null && comic.getSeries().equals(seriesResult.getSeries())) {
 								alreadyFound = true;
 								break;
 							}
@@ -66,7 +66,7 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 					}
 					return data;
 				} else {
-					comicQuery.orderBy("issue", true).where().eq("series", mSeriesFilter.replace("'", "''"));
+					comicQuery.orderBy("issue", true).where().raw("LOWER(`series`) = '" + mSeriesFilter.replace("'", "''").toLowerCase() + "'");
 				}// if
 			} else { // Filter by reading progress.
 				switch (mFilterMode) {

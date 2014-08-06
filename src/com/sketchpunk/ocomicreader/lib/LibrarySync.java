@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
+import sage.io.Path;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -331,15 +332,15 @@ public class LibrarySync implements Runnable {
 			seriesName = comic.getSeries();
 			if (seriesName == null || seriesName.isEmpty() || seriesName.compareToIgnoreCase(ComicLibrary.UKNOWN_SERIES) == 0) {
 				if (mUseFldForSeries)
-					seriesName = sage.io.Path.getParentName(comicPath);
+					seriesName = Path.getParentName(comicPath);
 				else {
 					if (sParser == null)
 						sParser = new SeriesParser(); // JIT
 					seriesName = sParser.getSeriesName(comicPath);
 
 					// if seriesName ends up being the path, use the parent folder as the series name.
-					if (seriesName == comicPath) {
-						seriesName = sage.io.Path.getParentName(comicPath);
+					if (seriesName.contains("/")) {
+						seriesName = Path.getParentName(comicPath);
 					} else {
 						seriesIssue = sParser.getSeriesIssue(comicPath);
 					}

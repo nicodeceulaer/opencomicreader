@@ -312,9 +312,10 @@ public class ComicLibrary {
 	}// func
 
 	public static void clearSeries(Context context) {
+		getComicDao(context);
 		UpdateBuilder<Comic, Integer> comicUpdate = comicDao.updateBuilder();
 		try {
-			comicUpdate.updateColumnValue("series", null);
+			comicUpdate.updateColumnValue("series", ComicLibrary.UKNOWN_SERIES);
 			comicUpdate.update();
 		} catch (SQLException e) {
 			Log.e("sql", e.getLocalizedMessage());
