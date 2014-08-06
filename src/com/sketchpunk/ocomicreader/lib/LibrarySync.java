@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
@@ -254,6 +255,7 @@ public class LibrarySync implements Runnable {
 		String[] comicMeta; // Title,Series,Volume,Issue
 		File file;
 		String comicPath, seriesName;
+		int seriesIssue = 0;
 		Integer comicID;
 		iComicArchive archive;
 
@@ -287,56 +289,65 @@ public class LibrarySync implements Runnable {
 			if (!comic.isCoverExists()) {
 				sendProgress("Creating thumbnail for " + comicPath);
 				archive = ComicLoader.getArchiveInstance(comicPath);
-				archive.getLibraryData(comicInfo);
+				if (archive == null) {
+					Log.e("archive", String.format("Archive %1$s couldn't be read. Possibly wrong format or broken file.", comicPath));
+					// TODO: if the file format is wrong, but file itself is alright maybe we could read correct format from file metadata?
+				} else {
+					archive.getLibraryData(comicInfo);
 
-				comic.setPageCount(Integer.parseInt(comicInfo[0]));
+					comic.setPageCount(Integer.parseInt(comicInfo[0]));
 
-				// No images in archive, then delete
-				if (comic.getPageCount() == 0) {
-					comicsToDelete.add(comic);
-					continue;
-				}// if
+					// No images in archive, then delete
+					if (comic.getPageCount() == 0) {
+						comicsToDelete.add(comic);
+						continue;
+					}// if
 
-				// Create ThumbNail
-				if (ComicLibrary.createThumb(mCoverHeight, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
-					comic.setCoverExists(true);
+					// Create ThumbNail
+					if (ComicLibrary.createThumb(mCoverHeight, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
+						comic.setCoverExists(true);
+					}
+
+					// Get Meta Information
+					comicMeta = archive.getMeta(); // Title,Series,Volume,Issue
+					if (comicMeta != null) {
+						if (!comicMeta[0].isEmpty()) {
+							comic.setTitle(comicMeta[0].replaceAll("'", "''"));
+						}
+						if (!comicMeta[1].isEmpty()) {
+							comic.setSeries(comicMeta[1].replaceAll("'", "''"));
+						}
+					}// if}
+
+					// Save information to the db.
+					comicDao.update(comic);
+					if (comicMeta != null && comicMeta[1] != "")
+						continue; // Since series was updated from meta, Don't continue the rest of the loop which handles the series
 				}
-
-				// Get Meta Information
-				comicMeta = archive.getMeta(); // Title,Series,Volume,Issue
-				if (comicMeta != null) {
-					if (!comicMeta[0].isEmpty()) {
-						comic.setTitle(comicMeta[0].replaceAll("'", "''"));
-					}
-					if (!comicMeta[1].isEmpty()) {
-						comic.setSeries(comicMeta[1].replaceAll("'", "''"));
-					}
-				}// if}
-
-				// Save information to the db.
-				comicDao.update(comic);
-				if (comicMeta != null && comicMeta[1] != "")
-					continue; // Since series was updated from meta, Don't continue the rest of the loop which handles the series
 			}// if
 
 			// .........................................
 			// if series does not exist, create a series name.
-			seriesName = comic.getTitle();
+			seriesName = comic.getSeries();
 			if (seriesName == null || seriesName.isEmpty() || seriesName.compareToIgnoreCase(ComicLibrary.UKNOWN_SERIES) == 0) {
 				if (mUseFldForSeries)
 					seriesName = sage.io.Path.getParentName(comicPath);
 				else {
 					if (sParser == null)
 						sParser = new SeriesParser(); // JIT
-					seriesName = sParser.get(comicPath);
+					seriesName = sParser.getSeriesName(comicPath);
 
 					// if seriesName ends up being the path, use the parent folder as the series name.
-					if (seriesName == comicPath)
+					if (seriesName == comicPath) {
 						seriesName = sage.io.Path.getParentName(comicPath);
+					} else {
+						seriesIssue = sParser.getSeriesIssue(comicPath);
+					}
 				}// if
 
 				if (!seriesName.isEmpty()) {
 					comic.setSeries(seriesName.replace("'", "''"));
+					comic.setIssue(seriesIssue);
 					comicDao.update(comic);
 				}
 			}// if

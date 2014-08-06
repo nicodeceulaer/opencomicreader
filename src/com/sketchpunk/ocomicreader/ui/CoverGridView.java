@@ -1,14 +1,11 @@
 package com.sketchpunk.ocomicreader.ui;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import sage.adapter.ComicGridAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
-import sage.loader.LoadImageView;
 import sage.ui.ProgressCircle;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -17,13 +14,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
@@ -37,21 +32,20 @@ import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
-import com.j256.ormlite.stmt.QueryBuilder;
 import com.sketchpunk.ocomicreader.R;
 import com.sketchpunk.ocomicreader.ViewActivity;
+import com.sketchpunk.ocomicreader.lib.ComicDatabaseLoader;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 
-public class CoverGridView extends GridView implements OnItemClickListener, LoaderManager.LoaderCallbacks<Collection<Comic>>,
-		LoadImageView.OnImageLoadedListener {
+public class CoverGridView extends GridView implements OnItemClickListener, LoaderManager.LoaderCallbacks<Collection<Comic>> {
 
 	public interface iCallback {
 		void onDataRefreshComplete();
 	}
 
-	private final String TAG = "COVERGRIDVIEW";
 	private ComicGridAdapter mAdapter;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
+	private ComicDatabaseLoader comicDatabaseLoader;
 
 	public int recordCount = 0;
 	private int mFilterMode = 0;
@@ -59,13 +53,9 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 
 	private final int mTopPadding = 130; // TODO: get the proper bar height to
 											// make this work.
-	private int mThumbHeight = 600;
 	private int mThumbPadding = 0;
 	private int mGridPadding = 0;
 	private int mGridColNum = 2;
-
-	private final boolean mIsFirstRun = true;
-	private String mThumbPath;
 
 	public CoverGridView(Context context) {
 		super(context);
@@ -86,16 +76,14 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 			this.mGridColNum = prefs.getInt("libColCnt", 2);
 			this.mGridPadding = prefs.getInt("libPadding", 0);
 			this.mThumbPadding = prefs.getInt("libCoverPad", 3);
-			this.mThumbHeight = prefs.getInt("libCoverHeight", 800);
 		} catch (Exception e) {
 			System.err.println("Error Loading Library Prefs " + e.getMessage());
 		}// try
 
 		// ....................................
 		// set values
-		mThumbPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/OpenComicReader/thumbs/";
 
-		mAdapter = new ComicGridAdapter(this.getContext(), R.layout.listitem_library, getData());
+		mAdapter = new ComicGridAdapter(this.getContext(), R.layout.listitem_library, new ArrayList<Comic>());
 
 		this.setNumColumns(mGridColNum);
 		this.setPadding(mGridPadding, mGridPadding + mTopPadding, mGridPadding, mGridPadding);
@@ -107,7 +95,13 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// ....................................
 		// Start DB and Data Loader
 		getComicDao();
+		LoaderManager loaderManager = getLoaderManager();
+		loaderManager.initLoader(0, null, this);
 
+	}// func
+
+	private LoaderManager getLoaderManager() {
+		return ((FragmentActivity) this.getContext()).getSupportLoaderManager();
 	}// func
 
 	private void getComicDao() {
@@ -167,62 +161,11 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}// func
 
 	public void refreshData() {
-		// TODO Auto-generated method stub
-
+		comicDatabaseLoader.setmFilterMode(mFilterMode);
+		comicDatabaseLoader.setmSeriesFilter(mSeriesFilter);
+		comicDatabaseLoader.setSeriesFiltered(isSeriesFiltered());
+		getLoaderManager().restartLoader(0, null, this);
 	}
-
-	/*
-	 * ======================================================== Cursor Loader : LoaderManager.LoaderCallbacks<Cursor>
-	 */
-	private List<Comic> getData() {
-		List<Comic> imageItems = new ArrayList<Comic>();
-
-		if (comicDao == null) {
-			getComicDao();
-		}
-
-		imageItems = comicDao.queryForAll();
-
-		return imageItems;
-
-	}
-
-	@Override
-	public Loader<Collection<Comic>> onCreateLoader(int id, Bundle arg) {
-		getComicDao();
-		QueryBuilder<Comic, Integer> comicQuery = comicDao.queryBuilder();
-
-		try {
-			if (isSeriesFiltered()) {// Filter by series
-				if (mSeriesFilter.isEmpty()) {
-					// sql =
-					// "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
-					comicQuery.orderBy("series", true).distinct();
-				} else {
-					comicQuery.orderBy("title", true).where().eq("series", mSeriesFilter.replace("'", "''"));
-				}// if
-			} else { // Filter by reading progress.
-				switch (mFilterMode) {
-				case 2:
-					comicQuery.where().eq("pageRead", 0);
-					break; // Unread;
-				case 3:
-					comicQuery.where().gt("pageRead", 0).and().lt("pageRead", "pageCount - 1");
-					break;// Progress
-				case 4:
-					comicQuery.where().ge("pageRead", "pageCount - 1");
-					break;// Read
-				}// switch
-				comicQuery.orderBy("title", true);
-			}// if
-		} catch (SQLException e) {
-			Log.e("sql", e.getLocalizedMessage());
-		}
-		// ............................................
-		Loader<Collection<Comic>> loader = new Loader<Collection<Comic>>(getContext());
-		// TODO: do something magic with loader?
-		return loader;
-	}// func
 
 	/*
 	 * ======================================================== Adapter Events
@@ -235,104 +178,6 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		public Bitmap bitmap = null;
 		public String series = "";
 	}// cls
-
-	// @Override
-	// public View onCreateListItem(View v) {
-	// try {
-	// AdapterItemRef itmRef = new AdapterItemRef();
-	// itmRef.lblTitle = (TextView) v.findViewById(R.id.lblTitle);
-	// itmRef.pcProgress = (ProgressCircle) v.findViewById(R.id.pcProgress);
-	// itmRef.imgCover = (ImageView) v.findViewById(R.id.imgCover);
-	// itmRef.imgCover.setTag(itmRef);
-	// itmRef.imgCover.getLayoutParams().height = mThumbHeight;
-	// v.setTag(itmRef);
-	// } catch (Exception e) {
-	// System.out.println("onCreateListItem " + e.getMessage());
-	// }// try
-	// return v;
-	// }// func
-	//
-	// @Override
-	// public void onBindListItem(View v, Cursor c) {
-	// try {
-	// AdapterItemRef itmRef = (AdapterItemRef) v.getTag();
-	//
-	// // ..............................................
-	// String id = c.getString(mAdapter.getColIndex("_id")), tmp = c.getString(mAdapter.getColIndex("title"));
-	//
-	// // Grid view binds more then one time, limit double loading to save
-	// // on resources used to load images.
-	// // Need to change ID to uniqueness, but also check title because
-	// // there is a small bind issue going back/forth between series view
-	// if (itmRef.id.equals(tmp) && itmRef.lblTitle.getText().equals(tmp)) {
-	// System.out.println("Repeat");
-	// return;
-	// }
-	// itmRef.id = id;
-	//
-	// if (isSeriesFiltered() && mSeriesFilter.isEmpty()) {
-	// itmRef.series = tmp;
-	// tmp += " (" + c.getString(mAdapter.getColIndex("cntIssue")) + ")";
-	// } else
-	// itmRef.series = "";
-	// itmRef.lblTitle.setText(tmp);
-	//
-	// // ..............................................
-	// // load Cover Image
-	// if (c.getString(mAdapter.getColIndex("isCoverExists")).equals("1")) {
-	// LoadImageView.loadImage(mThumbPath + itmRef.id + ".jpg", itmRef.imgCover, this);
-	// } else {
-	// // No image, clear out images TODO put a default image for
-	// // missing covers.
-	// itmRef.imgCover.setImageBitmap(null);
-	// if (itmRef.bitmap != null) {
-	// itmRef.bitmap.recycle();
-	// itmRef.bitmap = null;
-	// }// if
-	// }// if
-	//
-	// // ..............................................
-	// // display reading progress
-	// float progress = 0f;
-	// int pTotal = c.getInt(mAdapter.getColIndex("pgCount"));
-	// if (pTotal > 0) {
-	// float pRead = c.getFloat(mAdapter.getColIndex("pgRead"));
-	// if (pRead > 0)
-	// pRead += 1; // Page index start at 0, so if the user has
-	// // already passed the first page, Add value to
-	// // it to be able to get 100%, else leave it so
-	// // it can get 0%
-	// progress = (pRead / (pTotal));
-	// }// if
-	//
-	// itmRef.pcProgress.setProgress(progress);
-	// } catch (Exception e) {
-	// System.out.println("onBindListItem " + e.getMessage());
-	// }// try
-	// }// func
-
-	/*
-	 * ======================================================== Image Loading
-	 */
-	@Override
-	public void onImageLoaded(boolean isSuccess, Bitmap bmp, View view) {
-		if (view == null)
-			return;
-		ImageView iv = (ImageView) view;
-
-		if (!isSuccess)
-			iv.setImageBitmap(null); // release reference, if cover didn't load
-										// show that it didn't.
-
-		AdapterItemRef itmRef = (AdapterItemRef) iv.getTag();
-		if (itmRef.bitmap != null) {
-			itmRef.bitmap.recycle();
-			itmRef.bitmap = null;
-		}// if
-
-		itmRef.bitmap = bmp; // keeping reference to make sure to clear it out
-								// when its not needed
-	}// func
 
 	/*
 	 * ======================================================== Context Menu
@@ -469,4 +314,14 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		mAdapter.clear();
 	}
 
+	@Override
+	public Loader<Collection<Comic>> onCreateLoader(int id, Bundle arg) {
+		comicDatabaseLoader = new ComicDatabaseLoader(getContext());
+
+		comicDatabaseLoader.setmFilterMode(mFilterMode);
+		comicDatabaseLoader.setmSeriesFilter(mSeriesFilter);
+		comicDatabaseLoader.setSeriesFiltered(isSeriesFiltered());
+
+		return comicDatabaseLoader;
+	}// func
 }// cls
