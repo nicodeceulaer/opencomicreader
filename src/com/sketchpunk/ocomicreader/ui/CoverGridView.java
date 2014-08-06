@@ -6,13 +6,11 @@ import java.util.Collection;
 import sage.adapter.ComicGridAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
-import sage.ui.ProgressCircle;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
@@ -26,8 +24,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
@@ -168,25 +164,13 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}
 
 	/*
-	 * ======================================================== Adapter Events
-	 */
-	public class AdapterItemRef {
-		public String id = "";
-		public TextView lblTitle;
-		public ImageView imgCover;
-		public ProgressCircle pcProgress;
-		public Bitmap bitmap = null;
-		public String series = "";
-	}// cls
-
-	/*
 	 * ======================================================== Context Menu
 	 */
 	public void createContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-		AdapterItemRef ref = (AdapterItemRef) info.targetView.getTag();
+		ComicGridAdapter.ViewHolder ref = (ComicGridAdapter.ViewHolder) info.targetView.getTag();
 
-		menu.setHeaderTitle(ref.lblTitle.getText().toString());
+		menu.setHeaderTitle(ref.libraryTitle.getText().toString());
 		menu.add(0, 2, 0, "Delete");
 		menu.add(0, 1, 1, "Reset Progress");
 		menu.add(0, 3, 2, "Mark as Read");
@@ -202,9 +186,9 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		}// if
 
 		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-		final AdapterItemRef ref = (AdapterItemRef) info.targetView.getTag();
-		final Integer comicID = Integer.parseInt(ref.id);
-		final String seriesName = ref.series;
+		final ComicGridAdapter.ViewHolder ref = (ComicGridAdapter.ViewHolder) info.targetView.getTag();
+		final Integer comicID = ref.id;
+		final String seriesName = ref.seriesName;
 		final Context context = this.getContext();
 		AlertDialog.Builder abBuilder;
 
@@ -212,7 +196,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// ...................................
 		case 2:// DELETE
 			abBuilder = new AlertDialog.Builder(this.getContext());
-			abBuilder.setTitle("Delete Comic : " + ref.lblTitle.getText().toString());
+			abBuilder.setTitle("Delete Comic : " + ref.libraryTitle.getText().toString());
 			abBuilder.setMessage("You are able to remove the selected comic from the library or from the device competely.");
 			abBuilder.setCancelable(true);
 			abBuilder.setNegativeButton("Cancel", null);
@@ -235,7 +219,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// ...................................
 		case 1:// Reset Progress
 			abBuilder = new AlertDialog.Builder(this.getContext());
-			abBuilder.setTitle("Reset Progress : " + ref.lblTitle.getText().toString());
+			abBuilder.setTitle("Reset Progress : " + ref.libraryTitle.getText().toString());
 			abBuilder.setMessage("Are you sure you want to reset the reading progress?");
 			abBuilder.setCancelable(true);
 			abBuilder.setNegativeButton("Cancel", null);
@@ -251,7 +235,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// ...................................
 		case 3:// Mark as Read
 			abBuilder = new AlertDialog.Builder(this.getContext());
-			abBuilder.setTitle("Mark as Read : " + ref.lblTitle.getText().toString());
+			abBuilder.setTitle("Mark as Read : " + ref.libraryTitle.getText().toString());
 			abBuilder.setMessage("Are you sure you want to change the reading progress?");
 			abBuilder.setCancelable(true);
 			abBuilder.setNegativeButton("Cancel", null);
@@ -276,7 +260,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 			} else
 				sSeries = seriesName;
 
-			sage.ui.InputDialog inDialog = new sage.ui.InputDialog(this.getContext(), "Edit Series : " + ref.lblTitle.getText().toString(), null, sSeries) {
+			sage.ui.InputDialog inDialog = new sage.ui.InputDialog(this.getContext(), "Edit Series : " + ref.libraryTitle.getText().toString(), null, sSeries) {
 				@Override
 				public boolean onOk(String txt) {
 					if (seriesName == txt)

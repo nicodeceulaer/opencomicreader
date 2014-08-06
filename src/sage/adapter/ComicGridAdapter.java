@@ -21,7 +21,6 @@ import android.widget.TextView;
 
 import com.sketchpunk.ocomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
-import com.sketchpunk.ocomicreader.ui.CoverGridView.AdapterItemRef;
 
 public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageView.OnImageLoadedListener {
 	private final Context context;
@@ -77,14 +76,20 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 		holder.issueNumber.setText(Integer.toString(comic.getIssue()));
 		holder.readingProgress.setProgress((float) comic.getPageRead() / (float) comic.getPageCount());
 
+		holder.id = comic.getId();
+		holder.seriesName = comic.getSeries();
+
 		return convertView;
 	}
 
-	static class ViewHolder {
-		TextView libraryTitle;
-		TextView issueNumber;
-		ImageView imageCover;
-		ProgressCircle readingProgress;
+	public static class ViewHolder {
+		public Integer id = null;
+		public Bitmap bitmap = null;
+		public String seriesName = null;
+		public TextView libraryTitle;
+		public TextView issueNumber;
+		public ImageView imageCover;
+		public ProgressCircle readingProgress;
 	}
 
 	@Override
@@ -97,7 +102,7 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 			iv.setImageBitmap(null); // release reference, if cover didn't load
 										// show that it didn't.
 
-		AdapterItemRef itmRef = (AdapterItemRef) iv.getTag();
+		ViewHolder itmRef = (ViewHolder) iv.getTag();
 		if (itmRef.bitmap != null) {
 			itmRef.bitmap.recycle();
 			itmRef.bitmap = null;
