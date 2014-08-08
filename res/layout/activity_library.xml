@@ -17,48 +17,24 @@
 		android:drawSelectorOnTop="true"
 		android:listSelector="@drawable/item_selected">
     </com.sketchpunk.ocomicreader.ui.CoverGridView>
-    
-   	<RelativeLayout
-   	    android:id="@+id/topBar"
-		android:layout_height="40dp"
-		android:layout_width="match_parent"
-		android:layout_alignParentTop="true"
-		android:background="#aa000000">
-
-   	   <LinearLayout
-   	        android:orientation="horizontal"
-   	        android:layout_width="wrap_content"
-   	        android:layout_height="wrap_content"
-   	        android:layout_marginLeft="8dp"
-	    	android:layout_alignParentLeft="true"
-	    	android:layout_centerInParent="true">
-   	        
-   	    	<Spinner android:id="@+id/spFilter"
-	   			android:layout_width="150dp"
-	   			android:layout_height="wrap_content"
-	   			style="@android:style/Widget.Holo.Spinner"/>
-
-   	    	<TextView android:id="@+id/lblSeries"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_gravity="center_vertical"
-		        android:textSize="16dp"
-		        android:textColor="#ffffff"
-		        android:paddingTop="0dp"
-		        android:paddingBottom="0dp"
-		        android:paddingLeft="0dp"
-		        android:paddingRight="0dp"
-		        android:layout_marginLeft="5dp"
-		        android:visibility="gone"
-		        /> 
-   	   	</LinearLayout>
-   	   	 
+     	   	 
    	    <LinearLayout
    	        android:layout_alignParentRight="true"
+   	        android:layout_alignParentTop="true"
    	        android:layout_centerInParent="true"
    	        android:orientation="horizontal"
    	        android:layout_width="wrap_content"
-   	        android:layout_height="wrap_content">
+   	        android:layout_height="40dp">
+   	    	
+   	        <Button android:id="@+id/btnLast"
+   	            android:paddingLeft="16dp"
+   	            android:paddingRight="8dp"
+   	            android:textColor="@android:color/white"
+   	            android:background="@drawable/btn_clear"
+   	            android:text="Last"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:drawableLeft="@android:drawable/ic_menu_directions" />
    	        
    	        <Button android:id="@+id/btnSync"
    	            android:paddingLeft="16dp"
@@ -81,5 +57,33 @@
 				android:drawableLeft="@android:drawable/ic_menu_more" />
    	        
    	    </LinearLayout>
-   </RelativeLayout>
+   	    
+   	    <LinearLayout
+   	        android:orientation="horizontal"
+   	        android:layout_width="wrap_content"
+   	        android:layout_height="40dp"
+   	        android:layout_marginLeft="8dp"
+	    	android:layout_alignParentLeft="true"
+	    	android:layout_alignParentBottom="true"  >
+   	        
+   	    	<Spinner android:id="@+id/spFilter"
+	   			android:layout_width="150dp"
+	   			android:layout_height="wrap_content"
+	   			style="@android:style/Widget.Holo.Spinner"/>
+   	    	
+
+   	    	<TextView android:id="@+id/lblSeries"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="center_vertical"
+		        android:textSize="16sp"
+		        android:textColor="#ffffff"
+		        android:paddingTop="0dp"
+		        android:paddingBottom="0dp"
+		        android:paddingLeft="0dp"
+		        android:paddingRight="0dp"
+		        android:layout_marginLeft="5dp"
+		        android:visibility="gone"
+		        /> 
+   	   	</LinearLayout>
 </RelativeLayout>

@@ -3,9 +3,11 @@ package com.sketchpunk.ocomicreader.lib;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
+import sage.data.domain.ReadingHistory;
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
@@ -19,6 +21,7 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
 	private Collection<Comic> data = null;
 	private RuntimeExceptionDao<Comic, Integer> comicDao = null;
+	private RuntimeExceptionDao<ReadingHistory, Integer> readingHistoryDao = null;
 
 	private boolean isSeriesFiltered = false;
 	private String mSeriesFilter = "";
@@ -79,6 +82,18 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 				case 4:
 					comicQuery.where().ge("pageRead", "pageCount - 1");
 					break;// Read
+				case 5:
+					if (readingHistoryDao == null) {
+						getReadingHistoryDao();
+					}
+					QueryBuilder<ReadingHistory, Integer> historyBuilder = readingHistoryDao.queryBuilder();
+
+					List<ReadingHistory> history = historyBuilder.orderBy("date", false).query();
+					data = new ArrayList<Comic>();
+					for (ReadingHistory historyItem : history) {
+						data.add(comicDao.queryForSameId(historyItem.getComic()));
+					}
+					return data; // Recent
 				}// switch
 				comicQuery.orderBy("series", true).orderBy("issue", true);
 			}// if
@@ -116,6 +131,11 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 	private void getComicDao() {
 		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(this.getContext(), DatabaseHelper.class);
 		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+	}
+
+	private void getReadingHistoryDao() {
+		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(this.getContext(), DatabaseHelper.class);
+		readingHistoryDao = databaseHelper.getRuntimeExceptionDao(ReadingHistory.class);
 	}
 
 	public boolean isSeriesFiltered() {

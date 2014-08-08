@@ -43,6 +43,7 @@
         <item>View Unread</item>
         <item>View in Progress</item>
         <item>View Read</item>
+        <item>View Recent</item>
     </string-array>
     <string-array name="libraryFilter_v">
         <item>0</item>
@@ -50,5 +51,6 @@
         <item>2</item>
         <item>3</item>
         <item>4</item>
+        <item>5</item>
     </string-array>
 </resources>

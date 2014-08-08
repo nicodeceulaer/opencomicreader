@@ -1,5 +1,9 @@
 package com.sketchpunk.ocomicreader;
 
+import java.sql.SQLException;
+
+import sage.data.DatabaseHelper;
+import sage.data.domain.ReadingHistory;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,6 +12,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
@@ -24,6 +29,9 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
@@ -32,11 +40,13 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	private CoverGridView mGridView;
 	private Button mBtnSync;
+	private Button mBtnLast;
 	private Button mBtnMenu;
 	private Spinner mSpFilter;
 	private SpinnerAdapter mSpinAdapter;
 	private TextView mSeriesLbl;
 	private ProgressDialog mProgress;
+	private RuntimeExceptionDao<ReadingHistory, Integer> readingHistoryDao = null;
 
 	/*
 	 * ======================================================== Main
@@ -72,6 +82,8 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		mBtnSync.setOnClickListener(this);
 		mBtnMenu = (Button) findViewById(R.id.btnMenu);
 		mBtnMenu.setOnClickListener(this);
+		mBtnLast = (Button) findViewById(R.id.btnLast);
+		mBtnLast.setOnClickListener(this);
 
 		mSpinAdapter = new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.libraryFilter));
 		mSpFilter = (Spinner) findViewById(R.id.spFilter);
@@ -199,6 +211,31 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
+		case R.id.btnLast:
+			if (readingHistoryDao == null) {
+				DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
+				readingHistoryDao = databaseHelper.getRuntimeExceptionDao(ReadingHistory.class);
+			}
+
+			QueryBuilder<ReadingHistory, Integer> readingHistoryQuery = readingHistoryDao.queryBuilder();
+			ReadingHistory lastRead = null;
+			try {
+				lastRead = readingHistoryQuery.orderBy("date", false).queryForFirst();
+			} catch (SQLException e) {
+				Log.e("sql", "Couldn't find last read comic " + e.getMessage());
+			}
+
+			OpenHelperManager.releaseHelper();
+
+			if (lastRead != null) {
+				Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
+				intent.putExtra("comicid", lastRead.getComic().getId());
+				this.startActivityForResult(intent, 0);
+			} else {
+				Toast.makeText(this, "Read some comic first", Toast.LENGTH_SHORT).show();
+			}
+
+			break;
 		case R.id.btnSync:
 			sage.ui.Dialogs.ConfirmBox(this, "Sync Library", "Are you sure you want sync the library?", new DialogInterface.OnClickListener() {
 				@Override

@@ -46,7 +46,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		if (o.loadFile(path)) {
 			return o;
 		} else {
-		return null;
+			return null;
 		}
 	}
 
@@ -57,6 +57,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	private int mPageLen, mCurrentPage;
 
 	private int mMaxSize;
+	private final boolean clearScreenForEInk;
 	private final int mPreloadSize = 2;
 	private ComicLoaderListener mListener;
 
@@ -75,9 +76,11 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		mMaxSize = prefs.getInt("maxTextureSize", 0);
+		clearScreenForEInk = prefs.getBoolean("clearScreenForEInk", false);
 
 		if (mMaxSize == 0) {
 			Intent intent = new Intent(mContext, OpenGLESTestingActivity.class);
+			intent.putExtra("isTest", true);
 			mContext.startActivity(intent);
 
 			mMaxSize = prefs.getInt("maxTextureSize", 2048); // 2048 should be safe for most devices
@@ -206,6 +209,12 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	}// func
 
 	private void loadToImageView(Bitmap bmp) {
+		if (clearScreenForEInk) {
+			Intent intent = new Intent(mContext, OpenGLESTestingActivity.class);
+			intent.putExtra("isTest", false);
+			mContext.startActivity(intent);
+		}
+
 		mImageView.setImageBitmap(bmp);
 		if (mListener != null)
 			mListener.onPageLoaded((bmp != null), mCurrentPage);

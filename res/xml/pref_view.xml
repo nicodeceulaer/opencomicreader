@@ -21,4 +21,7 @@
     
     <CheckBoxPreference android:key="readToRight" android:title="Read Left to Right" android:defaultValue="true"
         android:summary="If you wish to read Right to Left (Mangas), Uncheck this option and all the controls will be reversed."/>
+    
+    <CheckBoxPreference android:key="clearScreenForEInk" android:title="Clear screen when flipping pages to force E-ink refresh" android:defaultValue="false"
+	        android:summary="Use this feature if your E-ink device doesn't make full refresh when switching pages and you get a lot of ghosting."/>
 </PreferenceScreen>

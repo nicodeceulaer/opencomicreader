@@ -222,11 +222,6 @@ public class PageLoader {
 						}
 					}// if
 				}// if
-
-				if (newBmp != null) {
-					newBmp.recycle();
-					newBmp = null;
-				}
 			}// if
 
 			return bmp;
