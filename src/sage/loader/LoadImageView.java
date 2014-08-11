@@ -65,14 +65,14 @@ public class LoadImageView {
 	// Load Image through thread
 	// ************************************************************
 	protected static class LoadingTask extends AsyncTask {
-		private WeakReference mImgView = null;
-		private WeakReference mOnImageLoading = null;
-		private WeakReference mOnImageLoaded = null;
+		private WeakReference<View> mImgView = null;
+		private WeakReference<OnImageLoadingListener> mOnImageLoading = null;
+		private WeakReference<OnImageLoadedListener> mOnImageLoaded = null;
 
 		public String imagePath; // used to compare if the same task
 
 		public LoadingTask(View view, Object context) {
-			mImgView = new WeakReference(view);
+			mImgView = new WeakReference<View>(view);
 
 			if (context != null) {
 				if (context instanceof OnImageLoadingListener)
@@ -90,7 +90,7 @@ public class LoadImageView {
 				// .....................................
 				// If callback exists, then we need to load the image in a special sort of way.
 				if (mOnImageLoading != null) {
-					final OnImageLoadingListener callback = (OnImageLoadingListener) mOnImageLoading.get();
+					final OnImageLoadingListener callback = mOnImageLoading.get();
 					return (callback != null) ? callback.onImageLoading(imagePath) : null;
 				}// if
 
@@ -124,7 +124,7 @@ public class LoadImageView {
 				// --------------------------
 				// if no callback, but we have an image and a view.
 			} else if (mImgView != null && bmp != null) {
-				final View view = (View) mImgView.get();
+				final View view = mImgView.get();
 				if (view != null && view instanceof ImageView && bmp != null) {
 					((ImageView) view).setImageBitmap((Bitmap) bmp);
 					isSuccess = true;
@@ -140,9 +140,9 @@ public class LoadImageView {
 			// .....................................
 			// When done loading the image, alert parent
 			if (mOnImageLoaded != null) {
-				final OnImageLoadedListener callback = (OnImageLoadedListener) mOnImageLoaded.get();
+				final OnImageLoadedListener callback = mOnImageLoaded.get();
 				if (callback != null)
-					callback.onImageLoaded(isSuccess, (Bitmap) bmp, (View) mImgView.get());
+					callback.onImageLoaded(isSuccess, (Bitmap) bmp, mImgView.get());
 			}// if
 		}// func
 	}// cls
