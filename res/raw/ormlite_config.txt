@@ -1,5 +1,5 @@
 #
-# generated on 2014/08/05 11:35:05
+# generated on 2014/08/11 11:53:46
 #
 # --table-start--
 dataClass=sage.data.domain.Comic
@@ -33,26 +33,8 @@ fieldName=series
 # --field-start--
 fieldName=issue
 # --field-end--
-# --table-fields-end--
-# --table-end--
-#################################
-# --table-start--
-dataClass=sage.data.domain.ReadingHistory
-tableName=reading_history
-# --table-fields-start--
 # --field-start--
-fieldName=id
-generatedId=true
-# --field-end--
-# --field-start--
-fieldName=comic
-columnName=comic
-canBeNull=false
-foreign=true
-foreignAutoCreate=true
-# --field-end--
-# --field-start--
-fieldName=date
+fieldName=dateRead
 # --field-end--
 # --table-fields-end--
 # --table-end--

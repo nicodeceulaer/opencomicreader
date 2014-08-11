@@ -7,7 +7,6 @@ import java.util.Locale;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
-import sage.data.domain.ReadingHistory;
 import sage.ui.ActivityUtil;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -57,7 +56,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	private Boolean mPref_openNextComicOnEnd = true;
 
 	RuntimeExceptionDao<Comic, Integer> comicDao = null;
-	RuntimeExceptionDao<ReadingHistory, Integer> readingHistoryDao = null;
 	Comic currentComic = null;
 
 	// ------------------------------------------------------------------------
@@ -107,7 +105,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		String filePath = "";
 
 		getComicDao();
-		getReadingHistoryDao();
 
 		Intent intent = this.getIntent();
 		Uri uri = intent.getData();
@@ -144,30 +141,14 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 	private void updateReadingHistory() {
 		if (currentComic != null) {
-			ReadingHistory readingHistory = null;
-			List<ReadingHistory> foundHistory = readingHistoryDao.queryForEq("comic", currentComic);
-
-			if (foundHistory != null && foundHistory.size() > 0) {
-				readingHistory = foundHistory.get(0);
-				readingHistory.setDate(new Date());
-				readingHistoryDao.update(readingHistory);
-			} else {
-				readingHistory = new ReadingHistory();
-				readingHistory.setComic(currentComic);
-				readingHistory.setDate(new Date());
-				readingHistoryDao.create(readingHistory);
-			}
+			currentComic.setDateRead(new Date());
+			comicDao.update(currentComic);
 		}
 	}
 
 	private void getComicDao() {
 		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
 		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
-	}
-
-	private void getReadingHistoryDao() {
-		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
-		readingHistoryDao = databaseHelper.getRuntimeExceptionDao(ReadingHistory.class);
 	}
 
 	@Override
@@ -188,10 +169,6 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 		if (comicDao == null) {
 			getComicDao();
-		}
-
-		if (readingHistoryDao == null) {
-			getReadingHistoryDao();
 		}
 
 		if (mPref_FullScreen)

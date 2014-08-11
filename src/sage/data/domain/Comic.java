@@ -1,6 +1,7 @@
 package sage.data.domain;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -36,6 +37,9 @@ public class Comic implements Serializable {
 
 	@DatabaseField
 	private int issue;
+
+	@DatabaseField
+	private Date dateRead;
 
 	public Comic() {
 
@@ -111,6 +115,14 @@ public class Comic implements Serializable {
 
 	public void setIssue(int issue) {
 		this.issue = issue;
+	}
+
+	public Date getDateRead() {
+		return dateRead;
+	}
+
+	public void setDateRead(Date dateRead) {
+		this.dateRead = dateRead;
 	}
 
 }

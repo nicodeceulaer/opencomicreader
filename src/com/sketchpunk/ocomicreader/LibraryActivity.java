@@ -3,8 +3,9 @@ package com.sketchpunk.ocomicreader;
 import java.sql.SQLException;
 
 import sage.data.DatabaseHelper;
-import sage.data.domain.ReadingHistory;
+import sage.data.domain.Comic;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -46,7 +47,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	private SpinnerAdapter mSpinAdapter;
 	private TextView mSeriesLbl;
 	private ProgressDialog mProgress;
-	private RuntimeExceptionDao<ReadingHistory, Integer> readingHistoryDao = null;
+	private RuntimeExceptionDao<Comic, Integer> comicDao;
 
 	/*
 	 * ======================================================== Main
@@ -208,19 +209,23 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			super.onBackPressed();
 	}// func
 
+	private void getComicDao(Context context) {
+		if (comicDao == null) {
+			DatabaseHelper databaseHelper = OpenHelperManager.getHelper(context, DatabaseHelper.class);
+			comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+		}
+	}
+
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.btnLast:
-			if (readingHistoryDao == null) {
-				DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
-				readingHistoryDao = databaseHelper.getRuntimeExceptionDao(ReadingHistory.class);
-			}
+			getComicDao(getApplicationContext());
 
-			QueryBuilder<ReadingHistory, Integer> readingHistoryQuery = readingHistoryDao.queryBuilder();
-			ReadingHistory lastRead = null;
+			QueryBuilder<Comic, Integer> lastComicQuery = comicDao.queryBuilder();
+			Comic lastRead = null;
 			try {
-				lastRead = readingHistoryQuery.orderBy("date", false).queryForFirst();
+				lastRead = lastComicQuery.orderBy("dateRead", false).where().isNotNull("dateRead").queryForFirst();
 			} catch (SQLException e) {
 				Log.e("sql", "Couldn't find last read comic " + e.getMessage());
 			}
@@ -229,7 +234,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 			if (lastRead != null) {
 				Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
-				intent.putExtra("comicid", lastRead.getComic().getId());
+				intent.putExtra("comicid", lastRead.getId());
 				this.startActivityForResult(intent, 0);
 			} else {
 				Toast.makeText(this, "Read some comic first", Toast.LENGTH_SHORT).show();

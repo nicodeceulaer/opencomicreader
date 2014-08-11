@@ -3,7 +3,6 @@ package sage.data;
 import java.sql.SQLException;
 
 import sage.data.domain.Comic;
-import sage.data.domain.ReadingHistory;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -19,13 +18,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
 	private static final String DATABASE_NAME = "comicreader.db";
 
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 
 	private Dao<Comic, Integer> comicDao = null;
-	private Dao<ReadingHistory, Integer> readingHistoryDao = null;
 
 	private RuntimeExceptionDao<Comic, Integer> comicRuntimeDao = null;
-	private RuntimeExceptionDao<ReadingHistory, Integer> readingHistoryRuntimeDao = null;
 
 	public DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION, R.raw.ormlite_config);
@@ -36,7 +33,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 		try {
 			Log.i(DatabaseHelper.class.getName(), "onCreate");
 			TableUtils.createTable(connectionSource, Comic.class);
-			TableUtils.createTable(connectionSource, ReadingHistory.class);
 		} catch (SQLException e) {
 			Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
 			throw new RuntimeException(e);
@@ -45,8 +41,19 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 	}
 
 	@Override
-	public void onUpgrade(SQLiteDatabase arg0, ConnectionSource arg1, int arg2, int arg3) {
-		// TODO: nothing here yet, as we use new database
+	public void onUpgrade(SQLiteDatabase arg0, ConnectionSource arg1, int oldVersion, int newVersion) {
+		if (oldVersion < 2) { // Simplified database by changing reading history to a field
+			RuntimeExceptionDao<Comic, Integer> dao;
+			try {
+				dao = this.getComicRuntimeDao();
+				dao.executeRaw("ALTER TABLE `comics` ADD COLUMN dateRead DATE;");
+				dao.executeRaw("DROP TABLE `reading_history`;");
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 	public Dao<Comic, Integer> getComicDao() throws SQLException {
@@ -56,13 +63,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 		return comicDao;
 	}
 
-	public Dao<ReadingHistory, Integer> getReadingHistoryDao() throws SQLException {
-		if (readingHistoryDao == null) {
-			readingHistoryDao = getDao(ReadingHistory.class);
-		}
-		return readingHistoryDao;
-	}
-
 	public RuntimeExceptionDao<Comic, Integer> getComicRuntimeDao() throws SQLException {
 		if (comicRuntimeDao == null) {
 			comicRuntimeDao = getRuntimeExceptionDao(Comic.class);
@@ -70,20 +70,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 		return comicRuntimeDao;
 	}
 
-	public RuntimeExceptionDao<ReadingHistory, Integer> getReadingHistoryRuntimeDao() throws SQLException {
-		if (readingHistoryRuntimeDao == null) {
-			readingHistoryRuntimeDao = getRuntimeExceptionDao(ReadingHistory.class);
-		}
-		return readingHistoryRuntimeDao;
-	}
-
 	@Override
 	public void close() {
 		super.close();
 		comicDao = null;
-		readingHistoryDao = null;
 
 		comicRuntimeDao = null;
-		readingHistoryRuntimeDao = null;
 	}
 }
