@@ -2,9 +2,14 @@ package com.sketchpunk.ocomicreader.ui;
 
 import sage.listener.MultiFingerGestureDetector;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -19,8 +24,7 @@ import com.sketchpunk.ocomicreader.lib.ImgTransform;
 
 //Transition idea, First image crushes by width, then new image slides in while old is crushed widthwise.
 
-public class GestureImageView extends View implements OnScaleGestureListener,
-		GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
+public class GestureImageView extends View implements OnScaleGestureListener, GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
 		MultiFingerGestureDetector.OnGestureListener {
 
 	public static interface OnImageGestureListener {
@@ -32,15 +36,26 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	}// func
 
 	// Gesture Types
-	public static final int TAPLEFT = 1, TAPRIGHT = 4, FLINGLEFT = 2,
-			FLINGRIGHT = 8, TWOFINGTAP = 16, TWOFINGHOLD = 32,
+	public static final int TAPLEFT = 1, TAPRIGHT = 4, FLINGLEFT = 2, FLINGRIGHT = 8, TWOFINGTAP = 16, TWOFINGHOLD = 32,
 
-			MASKLEFT = 3, MASKRIGHT = 12;
+	MASKLEFT = 3, MASKRIGHT = 12;
 
 	// ========================================================================
 	private Bitmap mBitmap = null;
 	private final ImgTransform mImgTrans = new ImgTransform();
 	private Context mContext = null;
+
+	float[] colorMatrix_Negative = { -1.0f, 0, 0, 0, 255, // red
+			0, -1.0f, 0, 0, 255, // green
+			0, 0, -1.0f, 0, 255, // blue
+			0, 0, 0, 1.0f, 0 // alpha
+	};
+	private final Paint mPaintNegative = new Paint();
+	private final ColorFilter colorFilter_Negative = new ColorMatrixColorFilter(colorMatrix_Negative);
+	private boolean isNewImage = false;
+	private boolean isWhiteImage = false;
+	private static final Bitmap emptyBitmap = Bitmap.createBitmap(new int[] { Color.WHITE }, 1, 1, Bitmap.Config.ARGB_8888);
+	private boolean clearScreenForEInk = false;
 
 	private final Paint mPaint = new Paint(Paint.FILTER_BITMAP_FLAG); // make
 																		// scaled
@@ -78,6 +93,9 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	}
 
 	private void init(Context context) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		clearScreenForEInk = prefs.getBoolean("clearScreenForEInk", false);
+		mPaintNegative.setColorFilter(colorFilter_Negative);
 		mScaleGesture = new ScaleGestureDetector(context, this);
 		mGesture = new GestureDetector(context, this);
 		mGesture.setOnDoubleTapListener(this);
@@ -122,6 +140,7 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 		mImgTrans.applyTo(bmp, this);
 		mGestureMode = 0;
 
+		isNewImage = true;
 		invalidate();
 	}// func
 
@@ -151,18 +170,14 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	}
 
 	public boolean shiftRight() { // going right but down
-		boolean isRight = mImgTrans.isOnRight(), isBottom = mImgTrans
-				.isOnBottom(), isDone = false;
+		boolean isRight = mImgTrans.isOnRight(), isBottom = mImgTrans.isOnBottom(), isDone = false;
 
 		if (isRight && isBottom)
 			return false; // No more shifting
 		else if (!isRight) { // Shift to the right
-			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width(),
-					0, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width(), 0, false);
 		} else if (isRight) { // Shift all the way to the left, then shift down.
-			isDone = mImgTrans.appyPanAnimate(this,
-					mImgTrans.srcRect.left * -1, mImgTrans.srcRect.height(),
-					false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.left * -1, mImgTrans.srcRect.height(), false);
 		}// if
 
 		if (isDone)
@@ -176,12 +191,9 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 		if (isLeft && isTop)
 			return false; // No more shifting
 		else if (!isLeft) { // Shift to the right
-			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width()
-					* -1, 0, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width() * -1, 0, false);
 		} else if (isLeft) { // Shift all the way to the left, then shift down.
-			isDone = mImgTrans.appyPanAnimate(this,
-					mImgTrans.getRightBoundary(), mImgTrans.srcRect.height()
-							* -1, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.getRightBoundary(), mImgTrans.srcRect.height() * -1, false);
 		}// if
 
 		if (isDone)
@@ -190,18 +202,14 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	}// func
 
 	public boolean shiftLeft() { // going left by down
-		boolean isLeft = mImgTrans.isOnLeft(), isBottom = mImgTrans
-				.isOnBottom(), isDone = false;
+		boolean isLeft = mImgTrans.isOnLeft(), isBottom = mImgTrans.isOnBottom(), isDone = false;
 
 		if (isLeft && isBottom)
 			return false; // No more shifting
 		else if (!isLeft) { // Shift to the Left
-			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width()
-					* -1, 0, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width() * -1, 0, false);
 		} else if (isLeft) { // Shift all the way to the right, then shift down.
-			isDone = mImgTrans.appyPanAnimate(this,
-					mImgTrans.getRightBoundary(), mImgTrans.srcRect.height(),
-					false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.getRightBoundary(), mImgTrans.srcRect.height(), false);
 		}// if
 
 		if (isDone)
@@ -215,12 +223,9 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 		if (isRight && isTop)
 			return false; // No more shifting
 		else if (!isRight) {
-			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width(),
-					0, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.width(), 0, false);
 		} else if (isRight) {
-			isDone = mImgTrans.appyPanAnimate(this,
-					mImgTrans.srcRect.left * -1, mImgTrans.srcRect.height()
-							* -1, false);
+			isDone = mImgTrans.appyPanAnimate(this, mImgTrans.srcRect.left * -1, mImgTrans.srcRect.height() * -1, false);
 		}// if
 
 		if (isDone)
@@ -233,8 +238,18 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	@Override
 	protected void onDraw(Canvas canvas) {
 		if (mBitmap != null && !mBitmap.isRecycled()) {
-			canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect,
-					mPaint);
+			if (isNewImage && clearScreenForEInk) {
+				canvas.drawBitmap(emptyBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaintNegative);
+				isNewImage = false;
+				isWhiteImage = true;
+				invalidate();
+			} else if (isWhiteImage && clearScreenForEInk) {
+				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaintNegative);
+				isWhiteImage = false;
+				invalidate();
+			} else {
+				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaint);
+			}
 		} else
 			System.out.println("Bitmap is null");
 	}// func
@@ -248,8 +263,7 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 		// other is off causing the scroll to start triggering.
 		// So once a gesture starts, no other gesture should be allowed to run.
 		int action = e.getActionMasked();
-		if (action == MotionEvent.ACTION_DOWN
-				|| action == MotionEvent.ACTION_CANCEL)
+		if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_CANCEL)
 			mGestureMode = 0;
 
 		// ...............................................................
@@ -297,8 +311,7 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 	}// func
 
 	@Override
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-			float distanceY) {
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (mGestureMode == 0)
 			mGestureMode = 2;
 		else if (mGestureMode != 2)
@@ -318,23 +331,20 @@ public class GestureImageView extends View implements OnScaleGestureListener,
 
 	@Override
 	public void onLongPress(MotionEvent e) {
-		if (e.getPointerCount() > 1
-				|| !(mGestureMode == 0 || mGestureMode == 3))
+		if (e.getPointerCount() > 1 || !(mGestureMode == 0 || mGestureMode == 3))
 			return; // One finger zooming, other wise other multi finger gesture
 					// get interrupted.
 		if (mGestureMode == 0)
 			mGestureMode = 3;
 		mLastY = e.getY();
 
-		Toast toast = Toast.makeText(mContext, "One Touch Zoom Enabled",
-				Toast.LENGTH_SHORT);
+		Toast toast = Toast.makeText(mContext, "One Touch Zoom Enabled", Toast.LENGTH_SHORT);
 		toast.setGravity(Gravity.TOP | Gravity.RIGHT, 0, 0);
 		toast.show();
 	}// func
 
 	@Override
-	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-			float velocityY) {
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 		// System.out.format("FLing %d %d %d %n", (int)Math.abs(e1.getY() -
 		// e2.getY()), (int)Math.abs(e1.getX() - e2.getX()),
 		// (int)Math.abs(velocityX));
