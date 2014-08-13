@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
@@ -52,9 +51,8 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	};
 	private final Paint mPaintNegative = new Paint();
 	private final ColorFilter colorFilter_Negative = new ColorMatrixColorFilter(colorMatrix_Negative);
-	private boolean isNewImage = false;
-	private boolean isWhiteImage = false;
-	private static final Bitmap emptyBitmap = Bitmap.createBitmap(new int[] { Color.WHITE }, 1, 1, Bitmap.Config.ARGB_8888);
+	private int newImageFrame = 0;
+	private int showNewImageFramesFor = 0;
 	private boolean clearScreenForEInk = false;
 
 	private final Paint mPaint = new Paint(Paint.FILTER_BITMAP_FLAG); // make
@@ -95,6 +93,7 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	private void init(Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		clearScreenForEInk = prefs.getBoolean("clearScreenForEInk", false);
+		showNewImageFramesFor = prefs.getInt("showNewImageFramesFor", 3);
 		mPaintNegative.setColorFilter(colorFilter_Negative);
 		mScaleGesture = new ScaleGestureDetector(context, this);
 		mGesture = new GestureDetector(context, this);
@@ -140,7 +139,7 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 		mImgTrans.applyTo(bmp, this);
 		mGestureMode = 0;
 
-		isNewImage = true;
+		newImageFrame = 0;
 		invalidate();
 	}// func
 
@@ -238,14 +237,9 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	@Override
 	protected void onDraw(Canvas canvas) {
 		if (mBitmap != null && !mBitmap.isRecycled()) {
-			if (isNewImage && clearScreenForEInk) {
-				canvas.drawBitmap(emptyBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaintNegative);
-				isNewImage = false;
-				isWhiteImage = true;
-				invalidate();
-			} else if (isWhiteImage && clearScreenForEInk) {
+			if (clearScreenForEInk && newImageFrame < showNewImageFramesFor) {
 				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaintNegative);
-				isWhiteImage = false;
+				newImageFrame++;
 				invalidate();
 			} else {
 				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaint);

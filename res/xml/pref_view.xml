@@ -24,4 +24,10 @@
     
     <CheckBoxPreference android:key="clearScreenForEInk" android:title="Clear screen when flipping pages to force E-ink refresh" android:defaultValue="false"
 	        android:summary="Use this feature if your E-ink device doesn't make full refresh when switching pages and you get a lot of ghosting."/>
+    
+    <sage.pref.NumPickerPref android:key="showNewImageFramesFor"
+	    android:title="E-ink refresh length" android:summary="How many frames should refresh take? More clears more ghosting, but slows down page switching. Limit (1-60)"
+	    android:positiveButtonText="Save" android:negativeButtonText="Cancel"
+	    android:defaultValue="3" minnum="1" maxnum="60"/>
+    
 </PreferenceScreen>
