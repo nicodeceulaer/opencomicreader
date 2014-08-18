@@ -283,6 +283,10 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		return true;
 	}// func
 
+	public void onPause() {
+		mAdapter.clear();
+	}
+
 	@Override
 	public void onLoadFinished(Loader<Collection<Comic>> arg0, Collection<Comic> arg1) {
 		this.recordCount = arg1.size();

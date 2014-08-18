@@ -155,6 +155,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	public void onDestroy() {
 		OpenHelperManager.releaseHelper();
 		mComicLoad.close();
+		mImageView.recycle();
 		super.onDestroy();
 	}// func
 

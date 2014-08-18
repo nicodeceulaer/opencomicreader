@@ -10,6 +10,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -60,8 +61,8 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 																		// image
 																		// less
 																		// pixelated
-	private final int mTapBoundary = 75; // Left/Right boundary to denote page
-											// change
+	private int mTapBoundary = 300; // Left/Right boundary to denote page
+									// change
 
 	private ScaleGestureDetector mScaleGesture;
 	private GestureDetector mGesture;
@@ -107,8 +108,7 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 			mKeyDownListener = (OnKeyDownListener) context;
 		}
 
-		// mTapBoundary =
-		// (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,mTapBoundary,this.getResources().getDisplayMetrics());
+		mTapBoundary = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mTapBoundary, this.getResources().getDisplayMetrics());
 	}// func
 
 	@Override
@@ -426,4 +426,11 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	public boolean onDoubleTapEvent(MotionEvent e) {
 		return false;
 	}// func
+
+	public void recycle() {
+		if (this.mBitmap != null) {
+			this.mBitmap.recycle();
+		}
+	}
+
 }// cls

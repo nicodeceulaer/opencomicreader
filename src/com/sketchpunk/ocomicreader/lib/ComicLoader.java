@@ -1,6 +1,7 @@
 package com.sketchpunk.ocomicreader.lib;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,29 +58,30 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	private int mPageLen, mCurrentPage;
 
 	private int mMaxSize;
-	private final int mPreloadSize = 2;
-	private ComicLoaderListener mListener;
+	private final int mPreloadSize;
+	private WeakReference<ComicLoaderListener> mListener;
 
-	private GestureImageView mImageView;
+	private WeakReference<GestureImageView> mImageView;
 	private final PageLoader mPageLoader;
 	private iComicArchive mArchive;
 	private List<String> mPageList;
-	private Context mContext = null;
+	private WeakReference<Context> mContext = null;
 	private final DiskCache mCache;
 	private CacheLoader mCacheLoader = null;
 
 	public ComicLoader(Context context, GestureImageView o) {
-		mImageView = o;
-		mContext = context;
+		mImageView = new WeakReference<GestureImageView>(o);
+		mContext = new WeakReference<Context>(context);
 		mCache = new DiskCache(context, "comicLoader", CACHE_SIZE);
 
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		mMaxSize = prefs.getInt("maxTextureSize", 0);
+		mPreloadSize = prefs.getInt("pagesToPreload", 1);
 
 		if (mMaxSize == 0) {
-			Intent intent = new Intent(mContext, OpenGLESTestingActivity.class);
+			Intent intent = new Intent(context, OpenGLESTestingActivity.class);
 			intent.putExtra("isTest", true);
-			mContext.startActivity(intent);
+			context.startActivity(intent);
 
 			mMaxSize = prefs.getInt("maxTextureSize", 2048); // 2048 should be safe for most devices
 		}
@@ -87,7 +89,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		// ............................
 		// Save Callback
 		if (context instanceof ComicLoaderListener)
-			mListener = (ComicLoaderListener) context;
+			mListener = new WeakReference<ComicLoader.ComicLoaderListener>((ComicLoaderListener) context);
 
 		// ............................
 		mPageLoader = new PageLoader(this);
@@ -206,18 +208,32 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		}// for
 	}// func
 
+	private void emptyImageView() {
+		if (mImageView.get() != null) {
+			mImageView.get().recycle();
+			mImageView.get().setImageBitmap(null);
+		}
+	}
+
 	private void loadToImageView(Bitmap bmp) {
-		mImageView.setImageBitmap(bmp);
-		if (mListener != null)
-			mListener.onPageLoaded((bmp != null), mCurrentPage);
+		if (mImageView.get() != null) {
+			mImageView.get().setImageBitmap(bmp);
+			if (mListener != null && mListener.get() != null)
+				mListener.get().onPageLoaded((bmp != null), mCurrentPage);
+		}
 	}// func
 
 	/*--------------------------------------------------------
 	Page Loader Event, Getting images out of the archive.*/
 	@Override
+	public void onImageLoadStarted() {
+		emptyImageView();
+	}
+
+	@Override
 	public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath, int imgType) {
-		if (errMsg != null) {
-			Toast.makeText(mContext, errMsg, Toast.LENGTH_LONG).show();
+		if (errMsg != null && mContext.get() != null) {
+			Toast.makeText(mContext.get(), errMsg, Toast.LENGTH_LONG).show();
 		}// if
 
 		// ............................................

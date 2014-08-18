@@ -7,6 +7,11 @@
           android:summary="Set how the image should scale depending on the screen."
           android:entries="@array/scaleMode" android:entryValues="@array/scaleMode_v"/>
     
+    <sage.pref.NumPickerPref android:key="pagesToPreload"
+	    android:title="Pages to preload" android:summary="How many pages should be preloaded. Set it to lower if image quality gets lowered. Limit (0-2)"
+	    android:positiveButtonText="Save" android:negativeButtonText="Cancel"
+	    android:defaultValue="1" minnum="0" maxnum="2"/>
+    
 	<CheckBoxPreference android:key="showPageNum" android:title="Show Page Number" android:defaultValue="true"
         android:summary="When switching pages, a toast alert appears in the corner telling you what page you're on."/>
     

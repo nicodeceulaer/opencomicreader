@@ -14,6 +14,8 @@ import android.os.AsyncTask;
 public class PageLoader {
 	public static interface CallBack {
 		public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath, int imgType);
+
+		public void onImageLoadStarted();
 	}// interface
 
 	/*
@@ -37,6 +39,7 @@ public class PageLoader {
 		}// if
 
 		mTask = new LoadingTask(mCallBack, archive, imgType);
+		mCallBack.onImageLoadStarted();
 		mTask.execute(maxSize, imgPath);
 	}// func
 
