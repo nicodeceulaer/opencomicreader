@@ -202,7 +202,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			if (!mCache.contrainsKey(pgPath)) { // Preload next page if
 												// available.
 				System.out.println("Next Page is not cached " + Integer.toString(i));
-				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 0);
+				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 0, true);
 				break;
 			}// if
 		}// for
@@ -226,8 +226,10 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	/*--------------------------------------------------------
 	Page Loader Event, Getting images out of the archive.*/
 	@Override
-	public void onImageLoadStarted() {
-		emptyImageView();
+	public void onImageLoadStarted(boolean isPreloading) {
+		if (!isPreloading) {
+			emptyImageView();
+		}
 	}
 
 	@Override
@@ -263,7 +265,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			Bitmap bmp = mCache.getBitmap(pgPath);
 
 			if (bmp == null) { // Not in cache, Call Page Loader
-				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 1);
+				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 1, false);
 			} else {// Pass Image to View and check preloading the next image.
 				preloadNext();
 				return bmp;

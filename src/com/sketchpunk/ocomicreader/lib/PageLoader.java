@@ -15,7 +15,7 @@ public class PageLoader {
 	public static interface CallBack {
 		public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath, int imgType);
 
-		public void onImageLoadStarted();
+		public void onImageLoadStarted(boolean isPreloading);
 	}// interface
 
 	/*
@@ -28,7 +28,7 @@ public class PageLoader {
 		mCallBack = cb;
 	}// func
 
-	public void loadImage(String imgPath, int maxSize, iComicArchive archive, int imgType) {
+	public void loadImage(String imgPath, int maxSize, iComicArchive archive, int imgType, boolean isPreloading) {
 		if (mTask != null) {
 			if (mTask.getStatus() != AsyncTask.Status.FINISHED) {
 				if (mTask.imagePath != null && !mTask.imagePath.equals(imgPath))
@@ -39,7 +39,7 @@ public class PageLoader {
 		}// if
 
 		mTask = new LoadingTask(mCallBack, archive, imgType);
-		mCallBack.onImageLoadStarted();
+		mCallBack.onImageLoadStarted(isPreloading);
 		mTask.execute(maxSize, imgPath);
 	}// func
 

@@ -452,7 +452,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
 					} else {
 						queryBuilder.orderByRaw("LOWER(`title`) ASC").limit(1L).where()
-								.raw("LOWER(`title`) > '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'")
+								.raw("LOWER(`title`) > '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'").and()
 								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
 					}
 

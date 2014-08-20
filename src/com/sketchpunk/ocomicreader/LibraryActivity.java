@@ -4,7 +4,6 @@ import java.sql.SQLException;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
-import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -62,16 +61,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		Runtime rt = Runtime.getRuntime();
-		long maxMemory = rt.maxMemory();
-		Log.v("onCreate", "maxMemory:" + Long.toString(maxMemory));
-
-		ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		int memoryClass = am.getMemoryClass();
-		int largeMemoryClass = am.getLargeMemoryClass();
-		Log.v("onCreate", "memoryClass:" + Integer.toString(memoryClass));
-		Log.v("onCreate", "largeMemoryClass:" + Integer.toString(largeMemoryClass));
 
 		setContentView(R.layout.activity_library);
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
