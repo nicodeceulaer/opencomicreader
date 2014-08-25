@@ -12,8 +12,10 @@
     <string name="read_filter_title">Filter by read status</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_view">ViewActivity</string>
-    <string name="app_about">Homepage : http://github.com/sketchpunk/opencomicreader \n\n
-        Developer\n - VoR \n\n
+    <string name="app_about">Homepage : https://github.com/rlach/opencomicreader \n\n
+        Developers\n -
+        Areinu\n 
+        VoR \n\n
         Contributors\n
         - SpeedProd\n
         - afterlifesol\n
