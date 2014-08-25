@@ -293,6 +293,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		if (mGridView.isSeriesFiltered() && mGridView.getSeriesFilter() != "") {
 			mGridView.setSeriesFilter("");
 			mGridView.refreshData();
+			generateTitle();
 		} else if (mDrawerLayout.isDrawerOpen(mFiltersDrawer)) {
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
 		} else {
