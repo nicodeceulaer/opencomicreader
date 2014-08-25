@@ -171,6 +171,9 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}
 
 	private void setFilteringOptions() {
+		if (comicDatabaseLoader == null) {
+			comicDatabaseLoader = new ComicDatabaseLoader(getContext());
+		}
 		comicDatabaseLoader.setSeriesFilterMode(mSeriesFilterMode);
 		comicDatabaseLoader.setReadFilterMode(mReadFilterMode);
 		comicDatabaseLoader.setmSeriesFilter(mSeriesFilter);

@@ -30,6 +30,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_gravity="start"
+        android:clickable="true" 
         android:background="#000000"
         android:orientation="vertical" >
 
@@ -51,7 +52,6 @@
             android:id="@+id/series_filter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#111"
             android:choiceMode="singleChoice"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp" />
@@ -74,7 +74,6 @@
             android:id="@+id/read_filter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#111"
             android:choiceMode="singleChoice"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp" />

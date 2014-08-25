@@ -49,6 +49,10 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	private ListView readFilterList;
 	private ListView seriesFilterList;
 	private TextView readFilterTitle;
+	private CharSequence mTitle;
+	private String[] readFilters;
+	private String[] seriesFilters;
+	private SharedPreferences prefs;
 
 	/*
 	 * ======================================================== Main
@@ -65,8 +69,10 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		setContentView(R.layout.activity_library);
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
-		// test();
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+		mTitle = getTitle();
+
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		// ....................................
 		// setup background
 		RelativeLayout mLayouts = (RelativeLayout) findViewById(R.id.MainLayout);
@@ -86,13 +92,17 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		mFiltersDrawer = (LinearLayout) findViewById(R.id.filters_drawer);
 
 		seriesFilterList = (ListView) findViewById(R.id.series_filter);
-		seriesFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.libraryFilter)));
-		seriesFilterList.setOnItemClickListener(new SeriesFilterClickListener());
+		seriesFilters = this.getResources().getStringArray(R.array.libraryFilter);
+		seriesFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, seriesFilters));
+		SeriesFilterClickListener seriesFilterClickListener = new SeriesFilterClickListener();
+		seriesFilterList.setOnItemClickListener(seriesFilterClickListener);
 
 		readFilterList = (ListView) findViewById(R.id.read_filter);
 		readFilterTitle = (TextView) findViewById(R.id.filter_by_read);
-		readFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.readFilter)));
-		readFilterList.setOnItemClickListener(new ReadFilterClickListener());
+		readFilters = this.getResources().getStringArray(R.array.readFilter);
+		readFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, readFilters));
+		ReadFilterClickListener readFilterClickListener = new ReadFilterClickListener();
+		readFilterList.setOnItemClickListener(readFilterClickListener);
 
 		mGridView = (CoverGridView) findViewById(R.id.lvMain);
 
@@ -107,14 +117,13 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			@Override
 			public void onDrawerClosed(View view) {
 				super.onDrawerClosed(view);
-				getActionBar().setTitle("OPENED");
+				generateTitle();
 			}
 
 			/** Called when a drawer has settled in a completely open state. */
 			@Override
 			public void onDrawerOpened(View drawerView) {
 				super.onDrawerOpened(drawerView);
-				getActionBar().setTitle("CLOSED");
 			}
 		};
 
@@ -125,13 +134,17 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		// Load state of filter from Bundle
 		if (savedInstanceState != null) {
 			mGridView.setSeriesFilter(savedInstanceState.getString("mSeriesFilter"));
-			mGridView.setSeriesFilterMode(savedInstanceState.getInt("mFilterMode"));
+			mGridView.setSeriesFilterMode(savedInstanceState.getInt("mSeriesFilterMode"));
+			mGridView.setReadFilterMode(savedInstanceState.getInt("mReadFilterMode"));
 		} else {// if no state, load in default pref.
-			mGridView.setSeriesFilterMode(Integer.parseInt(prefs.getString("libraryFilter", "0")));
+			mGridView.setSeriesFilterMode(prefs.getInt("seriesFilter", 0));
+			mGridView.setReadFilterMode(prefs.getInt("readFilter", 0));
 		}// if
 
-		seriesFilterList.setSelection(mGridView.getSeriesFilterMode());
-		readFilterList.setSelection(mGridView.getSeriesFilterMode());
+		seriesFilterList.setItemChecked(mGridView.getSeriesFilterMode(), true);
+		readFilterList.setItemChecked(mGridView.getReadFilterMode(), true);
+		setReadFilterVisibility();
+		generateTitle();
 
 		// ....................................
 		// int barHeight =
@@ -143,6 +156,38 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		getActionBar().setHomeButtonEnabled(true);
 
 	}// func
+
+	protected void generateTitle() {
+		int seriesFilterMode = mGridView.getSeriesFilterMode();
+		int readingFilterMode = mGridView.getReadFilterMode();
+		String seriesFilter = mGridView.getSeriesFilter();
+
+		getActionBar().setSubtitle(null);
+		if (seriesFilterMode <= 0) {
+			if (readingFilterMode > 0) {
+				getActionBar().setTitle(readFilters[readingFilterMode]);
+			} else {
+				getActionBar().setTitle(mTitle);
+			}
+		} else {
+			if (seriesFilterMode == 1 && seriesFilter.isEmpty()) {
+				getActionBar().setTitle(seriesFilters[seriesFilterMode]);
+			} else {
+				if (!seriesFilter.isEmpty()) {
+					getActionBar().setTitle(seriesFilter);
+				} else {
+					getActionBar().setTitle(seriesFilters[seriesFilterMode]);
+				}
+				generateSubtitle(readingFilterMode);
+			}
+		}
+	}
+
+	private void generateSubtitle(int readingFilterMode) {
+		if (readingFilterMode > 0) {
+			getActionBar().setSubtitle(readFilters[readingFilterMode]);
+		}
+	}
 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
@@ -194,7 +239,8 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	protected void onSaveInstanceState(Bundle siState) {
 		// Save the state of the filters so
 		siState.putString("mSeriesFilter", mGridView.getSeriesFilter());
-		siState.putInt("mFilterMode", mGridView.getSeriesFilterMode());
+		siState.putInt("mSeriesFilterMode", mGridView.getSeriesFilterMode());
+		siState.putInt("mReadFilterMode", mGridView.getReadFilterMode());
 		super.onSaveInstanceState(siState);
 	}// func
 
@@ -216,6 +262,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	public void onResume() {
 		super.onResume();
+		// seriesFilterList.performItemClick(seriesFilterList.getAdapter().getView(0, null, null), 0, seriesFilterList.getAdapter().getItemId(0));
 		mGridView.refreshData();
 	}// func
 
@@ -246,8 +293,11 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		if (mGridView.isSeriesFiltered() && mGridView.getSeriesFilter() != "") {
 			mGridView.setSeriesFilter("");
 			mGridView.refreshData();
-		} else
+		} else if (mDrawerLayout.isDrawerOpen(mFiltersDrawer)) {
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+		} else {
 			super.onBackPressed();
+		}
 	}// func
 
 	private void getComicDao(Context context) {
@@ -345,16 +395,32 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	public void onDataRefreshComplete() {
 		if (mGridView.isSeriesFiltered()) {// Filter by series
 			if (!mGridView.getSeriesFilter().isEmpty()) {
-				readFilterList.setVisibility(View.VISIBLE);
-				readFilterTitle.setVisibility(View.VISIBLE);
+				generateTitle();
+				setReadFilterVisibility();
 			}// if
 		}// if
 	}// func
 
+	private void setReadFilterVisibility() {
+		if (mGridView.getSeriesFilterMode() == 1 && (mGridView.getSeriesFilter() == null || mGridView.getSeriesFilter().isEmpty())) {
+			readFilterList.setVisibility(View.GONE);
+			readFilterTitle.setVisibility(View.GONE);
+		} else {
+			readFilterList.setVisibility(View.VISIBLE);
+			readFilterTitle.setVisibility(View.VISIBLE);
+		}
+	}
+
 	private class SeriesFilterClickListener implements OnItemClickListener {
+		private final View previousView = null;
 
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			if (previousView != null) {
+				previousView.setPressed(false);
+			}
+			view.setPressed(true);
+			prefs.edit().putInt("seriesFilter", position).commit();
 			selectItem(position);
 		}
 
@@ -364,21 +430,23 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 				mGridView.refreshData();
 			}
 
-			if (position == 1 && (mGridView.getSeriesFilter() == null || mGridView.getSeriesFilter().isEmpty())) {
-				readFilterList.setVisibility(View.GONE);
-				readFilterTitle.setVisibility(View.GONE);
-			} else {
-				readFilterList.setVisibility(View.VISIBLE);
-				readFilterTitle.setVisibility(View.VISIBLE);
-			}
+			setReadFilterVisibility();
 
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
 		}
 	}
 
 	private class ReadFilterClickListener implements OnItemClickListener {
+		private View previousView = null;
+
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			if (previousView != null) {
+				previousView.setPressed(false);
+			}
+			view.setPressed(true);
+			previousView = view;
+			prefs.edit().putInt("readFilter", position).commit();
 			selectItem(position);
 		}
 

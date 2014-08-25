@@ -56,15 +56,4 @@
         <item>In Progress</item>
         <item>Read</item>
     </string-array>
-    <string-array name="libraryFilter_v">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-    </string-array>
-    <string-array name="readFilter_v">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </string-array>
 </resources>
