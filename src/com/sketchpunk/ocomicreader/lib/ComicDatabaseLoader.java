@@ -3,6 +3,7 @@ package com.sketchpunk.ocomicreader.lib;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
@@ -13,7 +14,9 @@ import android.util.Log;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 
 public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
@@ -22,7 +25,8 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
 	private boolean isSeriesFiltered = false;
 	private String mSeriesFilter = "";
-	private int mFilterMode = 1;
+	private int mSeriesFilterMode = 1;
+	private int mReadFilterMode = 0;
 
 	public ComicDatabaseLoader(Context context) {
 		super(context);
@@ -34,61 +38,75 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 			getComicDao();
 		}
 
-		QueryBuilder<Comic, Integer> comicQuery = comicDao.queryBuilder();
+		QueryBuilder<Comic, Integer> queryBuilder = comicDao.queryBuilder();
+		Where<Comic, Integer> where = queryBuilder.where();
+		PreparedQuery<Comic> preparedQuery = null;
 
 		try {
-			if (isSeriesFiltered) {// Filter by series
-				if (mSeriesFilter.isEmpty()) {
-					// sql =
-					// "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
-					GenericRawResults<String[]> rawResults = comicDao
-							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 1 GROUP BY LOWER(series) ORDER BY LOWER(series)");
-					data = new ArrayList<Comic>();
-					for (String[] resultArray : rawResults) {
-						Comic seriesResult = parseRawComicSeriesResults(resultArray);
+			if (mSeriesFilterMode == 1 && mSeriesFilter.isEmpty()) {// Filter by series
+				// sql =
+				// "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
+				GenericRawResults<String[]> rawResults = comicDao
+						.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 1 GROUP BY LOWER(series) ORDER BY LOWER(series)");
+				data = new ArrayList<Comic>();
+				for (String[] resultArray : rawResults) {
+					Comic seriesResult = parseRawComicSeriesResults(resultArray);
+					data.add(seriesResult);
+				}
+				GenericRawResults<String[]> rawResultsWithoutCovers = comicDao
+						.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 0 GROUP BY LOWER(series) ORDER BY LOWER(series)");
+
+				for (String[] resultArray : rawResultsWithoutCovers) {
+					Comic seriesResult = parseRawComicSeriesResults(resultArray);
+					boolean alreadyFound = false;
+					for (Comic comic : data) {
+						if (comic.getSeries() != null && comic.getSeries().equals(seriesResult.getSeries())) {
+							alreadyFound = true;
+							break;
+						}
+					}
+					if (alreadyFound == false) {
 						data.add(seriesResult);
 					}
-					GenericRawResults<String[]> rawResultsWithoutCovers = comicDao
-							.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 0 GROUP BY LOWER(series) ORDER BY LOWER(series)");
-
-					for (String[] resultArray : rawResultsWithoutCovers) {
-						Comic seriesResult = parseRawComicSeriesResults(resultArray);
-						boolean alreadyFound = false;
-						for (Comic comic : data) {
-							if (comic.getSeries() != null && comic.getSeries().equals(seriesResult.getSeries())) {
-								alreadyFound = true;
-								break;
-							}
-						}
-						if (alreadyFound == false) {
-							data.add(seriesResult);
-						}
-					}
-					return data;
-				} else {
-					comicQuery.orderBy("issue", true).where().raw("LOWER(`series`) = '" + mSeriesFilter.replace("'", "''").toLowerCase() + "'");
-				}// if
+				}
+				return data;
 			} else { // Filter by reading progress.
-				switch (mFilterMode) {
+				if (mSeriesFilterMode == 1) { // series selected
+					where.raw("LOWER(`series`) = '" + mSeriesFilter.replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
+				}
+				if (mSeriesFilterMode == 2) { // showing recent
+					where.isNotNull("dateRead");
+					queryBuilder.orderBy("dateRead", false);
+				} else { // normally order by series then issue
+					// TODO: add "order by" to drawer
+					queryBuilder.orderBy("series", true).orderBy("issue", true);
+				}
+
+				if (mReadFilterMode != 0 && mSeriesFilterMode != 0) {
+					where.and();
+				}
+
+				switch (mReadFilterMode) {
+				case 0:
+					break; // All;
+				case 1:
+					where.eq("pageRead", 0);
+					break;// Unread
 				case 2:
-					comicQuery.where().eq("pageRead", 0);
-					comicQuery.orderBy("series", true).orderBy("issue", true);
-					break; // Unread;
-				case 3:
-					comicQuery.where().gt("pageRead", 0).and().lt("pageRead", "pageCount - 1");
-					comicQuery.orderBy("series", true).orderBy("issue", true);
+					where.gt("pageRead", 0).and().lt("pageRead", "pageCount - 1");
 					break;// Progress
-				case 4:
-					comicQuery.where().ge("pageRead", "pageCount - 1");
-					comicQuery.orderBy("series", true).orderBy("issue", true);
+				case 3:
+					where.ge("pageRead", "pageCount - 1");
 					break;// Read
-				case 5:
-					comicQuery.orderBy("dateRead", false).where().isNotNull("dateRead");
-					break; // Recent
 				}// switch
 			}// if
 
-			data = comicQuery.query();
+			if (mSeriesFilterMode == 0 && mReadFilterMode == 0) {
+				data = comicDao.queryForAll();
+			} else {
+				preparedQuery = queryBuilder.prepare();
+				data = comicDao.query(preparedQuery);
+			}
 		} catch (SQLException e) {
 			Log.e("sql", e.getLocalizedMessage());
 		}
@@ -139,12 +157,20 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 		this.mSeriesFilter = mSeriesFilter;
 	}
 
-	public int getmFilterMode() {
-		return mFilterMode;
+	public int getSeriesFilterMode() {
+		return mSeriesFilterMode;
 	}
 
-	public void setmFilterMode(int mFilterMode) {
-		this.mFilterMode = mFilterMode;
+	public void setSeriesFilterMode(int seriesFilterMode) {
+		this.mSeriesFilterMode = seriesFilterMode;
+	}
+
+	public int getReadFilterMode() {
+		return mReadFilterMode;
+	}
+
+	public void setReadFilterMode(int readFilterMode) {
+		this.mReadFilterMode = readFilterMode;
 	}
 
 }

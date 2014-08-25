@@ -1,89 +1,83 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/MainLayout"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".LibraryActivity">
-	
-    <com.sketchpunk.ocomicreader.ui.CoverGridView android:id="@+id/lvMain"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-		android:numColumns="2"		
-		android:stretchMode="columnWidth"
-		android:clipToPadding="false"
-		android:scrollbarStyle="insideOverlay"
-		android:gravity="center"
-		android:drawSelectorOnTop="true"
-		android:listSelector="@drawable/item_selected">
-    </com.sketchpunk.ocomicreader.ui.CoverGridView>
-     	   	 
-   	    <LinearLayout
-   	        android:layout_alignParentRight="true"
-   	        android:layout_alignParentTop="true"
-   	        android:layout_centerInParent="true"
-   	        android:orientation="horizontal"
-   	        android:layout_width="wrap_content"
-   	        android:layout_height="40dp">
-   	    	
-   	        <Button android:id="@+id/btnLast"
-   	            android:paddingLeft="16dp"
-   	            android:paddingRight="8dp"
-   	            android:textColor="@android:color/white"
-   	            android:background="@drawable/btn_clear"
-   	            android:text="Last"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:drawableLeft="@android:drawable/ic_menu_directions" />
-   	        
-   	        <Button android:id="@+id/btnSync"
-   	            android:paddingLeft="16dp"
-   	            android:paddingRight="8dp"
-   	            android:textColor="@android:color/white"
-   	            android:background="@drawable/btn_clear"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="Sync"
-				android:drawableLeft="@android:drawable/ic_menu_add" />
-   	        
-   	        <Button android:id="@+id/btnMenu"
-   	            android:paddingLeft="8dp"
-   	            android:paddingRight="16dp"
-   	            android:textColor="@android:color/white"
-   	            android:background="?android:selectableItemBackground"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="Menu"
-				android:drawableLeft="@android:drawable/ic_menu_more" />
-   	        
-   	    </LinearLayout>
-   	    
-   	    <LinearLayout
-   	        android:orientation="horizontal"
-   	        android:layout_width="wrap_content"
-   	        android:layout_height="40dp"
-   	        android:layout_marginLeft="8dp"
-	    	android:layout_alignParentLeft="true"
-	    	android:layout_alignParentBottom="true"  >
-   	        
-   	    	<Spinner android:id="@+id/spFilter"
-	   			android:layout_width="150dp"
-	   			android:layout_height="wrap_content"
-	   			style="@android:style/Widget.Holo.Spinner"/>
-   	    	
+    android:layout_height="match_parent" >
 
-   	    	<TextView android:id="@+id/lblSeries"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_gravity="center_vertical"
-		        android:textSize="16sp"
-		        android:textColor="#ffffff"
-		        android:paddingTop="0dp"
-		        android:paddingBottom="0dp"
-		        android:paddingLeft="0dp"
-		        android:paddingRight="0dp"
-		        android:layout_marginLeft="5dp"
-		        android:visibility="gone"
-		        /> 
-   	   	</LinearLayout>
-</RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/MainLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <com.sketchpunk.ocomicreader.ui.CoverGridView
+            android:id="@+id/lvMain"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:clipToPadding="false"
+            android:drawSelectorOnTop="true"
+            android:gravity="center"
+            android:listSelector="@drawable/item_selected"
+            android:numColumns="2"
+            android:scrollbarStyle="insideOverlay"
+            android:stretchMode="columnWidth" >
+        </com.sketchpunk.ocomicreader.ui.CoverGridView>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/filters_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_gravity="start"
+        android:background="#000000"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/filter_by_series"
+            android:text="@string/series_filter_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="5dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:paddingTop="0dp"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
+
+        <ListView
+            android:id="@+id/series_filter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#111"
+            android:choiceMode="singleChoice"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp" />
+        
+        <TextView
+            android:id="@+id/filter_by_read"
+            android:text="@string/read_filter_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="5dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:paddingTop="0dp"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
+
+        <ListView
+            android:id="@+id/read_filter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#111"
+            android:choiceMode="singleChoice"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp" />
+    </LinearLayout>
+
+</android.support.v4.widget.DrawerLayout>

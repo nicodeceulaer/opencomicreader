@@ -9,24 +9,26 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.PopupMenu;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,18 +38,17 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
-public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, View.OnClickListener, OnItemSelectedListener,
-		PopupMenu.OnMenuItemClickListener, CoverGridView.iCallback {
+public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, CoverGridView.iCallback {
 
 	private CoverGridView mGridView;
-	private Button mBtnSync;
-	private Button mBtnLast;
-	private Button mBtnMenu;
-	private Spinner mSpFilter;
-	private SpinnerAdapter mSpinAdapter;
-	private TextView mSeriesLbl;
 	private ProgressDialog mProgress;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
+	private DrawerLayout mDrawerLayout;
+	private LinearLayout mFiltersDrawer;
+	private ActionBarDrawerToggle mDrawerToggle;
+	private ListView readFilterList;
+	private ListView seriesFilterList;
+	private TextView readFilterTitle;
 
 	/*
 	 * ======================================================== Main
@@ -80,32 +81,57 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		 * getWindow().setBackgroundDrawable(wallpaperDrawable); break; }//switch
 		 */
 		// ....................................
-		mBtnSync = (Button) findViewById(R.id.btnSync);
-		mBtnSync.setOnClickListener(this);
-		mBtnMenu = (Button) findViewById(R.id.btnMenu);
-		mBtnMenu.setOnClickListener(this);
-		mBtnLast = (Button) findViewById(R.id.btnLast);
-		mBtnLast.setOnClickListener(this);
 
-		mSpinAdapter = new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.libraryFilter));
-		mSpFilter = (Spinner) findViewById(R.id.spFilter);
-		mSpFilter.setOnItemSelectedListener(this);
-		mSpFilter.setAdapter(mSpinAdapter);
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		mFiltersDrawer = (LinearLayout) findViewById(R.id.filters_drawer);
 
-		mSeriesLbl = (TextView) findViewById(R.id.lblSeries);
+		seriesFilterList = (ListView) findViewById(R.id.series_filter);
+		seriesFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.libraryFilter)));
+		seriesFilterList.setOnItemClickListener(new SeriesFilterClickListener());
+
+		readFilterList = (ListView) findViewById(R.id.read_filter);
+		readFilterTitle = (TextView) findViewById(R.id.filter_by_read);
+		readFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.spinner_item, this.getResources().getStringArray(R.array.readFilter)));
+		readFilterList.setOnItemClickListener(new ReadFilterClickListener());
 
 		mGridView = (CoverGridView) findViewById(R.id.lvMain);
+
+		mDrawerToggle = new ActionBarDrawerToggle(this, /* host Activity */
+		mDrawerLayout, /* DrawerLayout object */
+		R.drawable.ic_drawer, /* nav drawer icon to replace 'Up' caret */
+		R.string.drawer_open, /* "open drawer" description */
+		R.string.drawer_close /* "close drawer" description */
+		) {
+
+			/** Called when a drawer has settled in a completely closed state. */
+			@Override
+			public void onDrawerClosed(View view) {
+				super.onDrawerClosed(view);
+				getActionBar().setTitle("OPENED");
+			}
+
+			/** Called when a drawer has settled in a completely open state. */
+			@Override
+			public void onDrawerOpened(View drawerView) {
+				super.onDrawerOpened(drawerView);
+				getActionBar().setTitle("CLOSED");
+			}
+		};
+
+		// Set the drawer toggle as the DrawerListener
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
 		// ....................................
 		// Load state of filter from Bundle
 		if (savedInstanceState != null) {
 			mGridView.setSeriesFilter(savedInstanceState.getString("mSeriesFilter"));
-			mGridView.setFilterMode(savedInstanceState.getInt("mFilterMode"));
+			mGridView.setSeriesFilterMode(savedInstanceState.getInt("mFilterMode"));
 		} else {// if no state, load in default pref.
-			mGridView.setFilterMode(Integer.parseInt(prefs.getString("libraryFilter", "0")));
+			mGridView.setSeriesFilterMode(Integer.parseInt(prefs.getString("libraryFilter", "0")));
 		}// if
 
-		mSpFilter.setSelection(mGridView.getFilterMode());
+		seriesFilterList.setSelection(mGridView.getSeriesFilterMode());
+		readFilterList.setSelection(mGridView.getSeriesFilterMode());
 
 		// ....................................
 		// int barHeight =
@@ -113,13 +139,62 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		mGridView.init();
 		registerForContextMenu(mGridView); // Route event from Activity to View
 
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setHomeButtonEnabled(true);
+
 	}// func
+
+	@Override
+	protected void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+		// Sync the toggle state after onRestoreInstanceState has occurred.
+		mDrawerToggle.syncState();
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		mDrawerToggle.onConfigurationChanged(newConfig);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.activity_main, menu);
+
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (mDrawerToggle.onOptionsItemSelected(item)) {
+			return true;
+		}
+
+		switch (item.getItemId()) {
+		case R.id.menu_last:
+			goToLastComic();
+			return true;
+		case R.id.menu_import:
+			showSyncDialog();
+			return true;
+		case R.id.menu_settings:
+			Intent intent = new Intent(this, PrefActivity.class);
+			this.startActivityForResult(intent, 0);
+			return true;
+		case R.id.menu_about:
+			sage.ui.Dialogs.About(this, this.getText(R.string.app_about));
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle siState) {
 		// Save the state of the filters so
 		siState.putString("mSeriesFilter", mGridView.getSeriesFilter());
-		siState.putInt("mFilterMode", mGridView.getFilterMode());
+		siState.putInt("mFilterMode", mGridView.getSeriesFilterMode());
 		super.onSaveInstanceState(siState);
 	}// func
 
@@ -142,42 +217,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	public void onResume() {
 		super.onResume();
 		mGridView.refreshData();
-	}// func
-
-	/*
-	 * ======================================================== Filter Spinner
-	 */
-	// @Override
-	@Override
-	public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-		if (mGridView.getFilterMode() != pos) {// initially, refreshdata gets
-												// called twice,its a waste.
-			mGridView.setFilterMode(pos);
-			mGridView.refreshData();
-		}// if
-	}// func
-
-	// @Override
-	@Override
-	public void onNothingSelected(AdapterView<?> parent) {
-	}// func
-
-	// @Override
-	@Override
-	public boolean onMenuItemClick(MenuItem item) {
-		switch (item.getItemId()) {
-		// ................................................
-		case R.id.menu_settings:
-			Intent intent = new Intent(this, PrefActivity.class);
-			// intent.putExtra("path",(String)view.getTag());
-			this.startActivityForResult(intent, 0);
-			break;
-		// ................................................
-		case R.id.menu_about:
-			sage.ui.Dialogs.About(this, this.getText(R.string.app_about));
-			break;
-		}// switch
-		return true;
 	}// func
 
 	/*
@@ -218,53 +257,36 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		}
 	}
 
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.btnLast:
-			getComicDao(getApplicationContext());
-
-			QueryBuilder<Comic, Integer> lastComicQuery = comicDao.queryBuilder();
-			Comic lastRead = null;
-			try {
-				lastRead = lastComicQuery.orderBy("dateRead", false).where().isNotNull("dateRead").queryForFirst();
-			} catch (SQLException e) {
-				Log.e("sql", "Couldn't find last read comic " + e.getMessage());
+	private void showSyncDialog() {
+		sage.ui.Dialogs.ConfirmBox(this, "Sync Library", "Are you sure you want sync the library?", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int id) {
+				startSync();
 			}
+		});
+	}
 
-			OpenHelperManager.releaseHelper();
+	private void goToLastComic() {
+		getComicDao(getApplicationContext());
 
-			if (lastRead != null) {
-				Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
-				intent.putExtra("comicid", lastRead.getId());
-				this.startActivityForResult(intent, 0);
-			} else {
-				Toast.makeText(this, "Read some comic first", Toast.LENGTH_SHORT).show();
-			}
+		QueryBuilder<Comic, Integer> lastComicQuery = comicDao.queryBuilder();
+		Comic lastRead = null;
+		try {
+			lastRead = lastComicQuery.orderBy("dateRead", false).where().isNotNull("dateRead").queryForFirst();
+		} catch (SQLException e) {
+			Log.e("sql", "Couldn't find last read comic " + e.getMessage());
+		}
 
-			break;
-		case R.id.btnSync:
-			sage.ui.Dialogs.ConfirmBox(this, "Sync Library", "Are you sure you want sync the library?", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int id) {
-					startSync();
-				}
-			});
+		OpenHelperManager.releaseHelper();
 
-			break;
-		case R.id.btnMenu:
-			// openOptionsMenu();
-			PopupMenu popup = new PopupMenu(this, v);
-			// / getMenuInflater().inflate(R.menu.activity_main, menu);
-			popup.setOnMenuItemClickListener(this);
-
-			MenuInflater inflater = popup.getMenuInflater();
-			inflater.inflate(R.menu.activity_main, popup.getMenu());
-			popup.show();
-
-			break;
-		}// switch
-	}// func
+		if (lastRead != null) {
+			Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
+			intent.putExtra("comicid", lastRead.getId());
+			this.startActivityForResult(intent, 0);
+		} else {
+			Toast.makeText(this, "Read some comic first", Toast.LENGTH_SHORT).show();
+		}
+	}
 
 	/*
 	 * ======================================================== Sync Library
@@ -321,15 +343,52 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	// @Override
 	@Override
 	public void onDataRefreshComplete() {
-		if (mSeriesLbl.getVisibility() != View.GONE)
-			mSeriesLbl.setVisibility(View.GONE);
-
 		if (mGridView.isSeriesFiltered()) {// Filter by series
 			if (!mGridView.getSeriesFilter().isEmpty()) {
-				mSeriesLbl.setText(mGridView.getSeriesFilter() + " [ " + Integer.toString(mGridView.recordCount) + " ]");
-				mSeriesLbl.setVisibility(View.VISIBLE);
+				readFilterList.setVisibility(View.VISIBLE);
+				readFilterTitle.setVisibility(View.VISIBLE);
 			}// if
 		}// if
 	}// func
 
+	private class SeriesFilterClickListener implements OnItemClickListener {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			selectItem(position);
+		}
+
+		private void selectItem(int position) {
+			if (mGridView.getSeriesFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
+				mGridView.setSeriesFilterMode(position);
+				mGridView.refreshData();
+			}
+
+			if (position == 1 && (mGridView.getSeriesFilter() == null || mGridView.getSeriesFilter().isEmpty())) {
+				readFilterList.setVisibility(View.GONE);
+				readFilterTitle.setVisibility(View.GONE);
+			} else {
+				readFilterList.setVisibility(View.VISIBLE);
+				readFilterTitle.setVisibility(View.VISIBLE);
+			}
+
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+		}
+	}
+
+	private class ReadFilterClickListener implements OnItemClickListener {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			selectItem(position);
+		}
+
+		private void selectItem(int position) {
+			if (mGridView.getReadFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
+				mGridView.setReadFilterMode(position);
+				mGridView.refreshData();
+			}
+
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+		}
+	}
 }// cls

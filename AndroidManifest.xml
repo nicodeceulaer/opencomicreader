@@ -58,18 +58,18 @@
         
         <activity
             android:name="com.sketchpunk.ocomicreader.PrefActivity"
-            android:theme="@android:style/Theme.Holo.NoActionBar" >
+            android:theme="@android:style/Theme.Holo" >
         </activity>
         
         <activity
             android:name="com.sketchpunk.ocomicreader.OpenGLESTestingActivity"
-            android:theme="@android:style/Theme.Holo.NoActionBar" >
+            android:theme="@android:style/Theme.Holo" >
         </activity>
         
         <activity
             android:name="com.sketchpunk.ocomicreader.LibraryActivity"
             android:label="Open Comic Reader"
-            android:theme="@android:style/Theme.Holo.NoActionBar">
+            android:theme="@android:style/Theme.Holo">
             
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

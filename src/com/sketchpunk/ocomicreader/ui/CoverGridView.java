@@ -44,11 +44,12 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	private ComicDatabaseLoader comicDatabaseLoader;
 
 	public int recordCount = 0;
-	private int mFilterMode = 0;
+	private int mSeriesFilterMode = 0;
+	private int mReadFilterMode = 0;
 	private String mSeriesFilter = "";
 
-	private final int mTopPadding = 130; // TODO: get the proper bar height to
-											// make this work.
+	private final int mTopPadding = 0; // TODO: get the proper bar height to
+										// make this work.
 	private int mThumbPadding = 0;
 	private int mGridPadding = 0;
 	private int mGridColNum = 2;
@@ -115,12 +116,20 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	/*
 	 * ======================================================== Getter & Setters
 	 */
-	public int getFilterMode() {
-		return mFilterMode;
+	public int getSeriesFilterMode() {
+		return mSeriesFilterMode;
 	}
 
-	public void setFilterMode(int i) {
-		mFilterMode = i;
+	public void setSeriesFilterMode(int i) {
+		mSeriesFilterMode = i;
+	}
+
+	public int getReadFilterMode() {
+		return mReadFilterMode;
+	}
+
+	public void setReadFilterMode(int readFilterMode) {
+		this.mReadFilterMode = readFilterMode;
 	}
 
 	public String getSeriesFilter() {
@@ -135,7 +144,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	 * ======================================================== misc
 	 */
 	public boolean isSeriesFiltered() {
-		return (mFilterMode == 1);
+		return (mSeriesFilterMode == 1);
 	}
 
 	@Override
@@ -157,10 +166,15 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}// func
 
 	public void refreshData() {
-		comicDatabaseLoader.setmFilterMode(mFilterMode);
+		setFilteringOptions();
+		getLoaderManager().restartLoader(0, null, this);
+	}
+
+	private void setFilteringOptions() {
+		comicDatabaseLoader.setSeriesFilterMode(mSeriesFilterMode);
+		comicDatabaseLoader.setReadFilterMode(mReadFilterMode);
 		comicDatabaseLoader.setmSeriesFilter(mSeriesFilter);
 		comicDatabaseLoader.setSeriesFiltered(isSeriesFiltered());
-		getLoaderManager().restartLoader(0, null, this);
 	}
 
 	/*
@@ -306,9 +320,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	public Loader<Collection<Comic>> onCreateLoader(int id, Bundle arg) {
 		comicDatabaseLoader = new ComicDatabaseLoader(getContext());
 
-		comicDatabaseLoader.setmFilterMode(mFilterMode);
-		comicDatabaseLoader.setmSeriesFilter(mSeriesFilter);
-		comicDatabaseLoader.setSeriesFiltered(isSeriesFiltered());
+		setFilteringOptions();
 
 		return comicDatabaseLoader;
 	}// func
