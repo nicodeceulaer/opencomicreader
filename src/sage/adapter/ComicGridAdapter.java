@@ -19,7 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.sketchpunk.ocomicreader.R;
+import com.runeai.runecomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 
 public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageView.OnImageLoadedListener {

@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.runeai.runecomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 
 public class PrefActivity extends PreferenceActivity implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
