@@ -14,6 +14,8 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:clipToPadding="false"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:drawSelectorOnTop="true"
             android:gravity="center"
             android:listSelector="@drawable/item_selected"
@@ -38,7 +40,7 @@
             android:id="@+id/filter_by_series"
             android:text="@string/series_filter_title"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginLeft="5dp"
             android:paddingBottom="0dp"
@@ -46,7 +48,7 @@
             android:paddingRight="0dp"
             android:paddingTop="0dp"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <ListView
             android:id="@+id/series_filter"
@@ -60,15 +62,15 @@
             android:id="@+id/filter_by_read"
             android:text="@string/read_filter_title"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginLeft="5dp"
+            android:layout_marginLeft="0dp"
             android:paddingBottom="0dp"
             android:paddingLeft="0dp"
             android:paddingRight="0dp"
             android:paddingTop="0dp"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <ListView
             android:id="@+id/read_filter"

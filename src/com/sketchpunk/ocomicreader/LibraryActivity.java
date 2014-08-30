@@ -2,6 +2,7 @@ package com.sketchpunk.ocomicreader;
 
 import java.sql.SQLException;
 
+import sage.adapter.DrawerFilterAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
 import android.app.ProgressDialog;
@@ -25,7 +26,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -93,14 +93,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		seriesFilterList = (ListView) findViewById(R.id.series_filter);
 		seriesFilters = this.getResources().getStringArray(R.array.libraryFilter);
-		seriesFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, seriesFilters));
+		seriesFilterList.setAdapter(new DrawerFilterAdapter(this, R.layout.list_item, seriesFilters));
 		SeriesFilterClickListener seriesFilterClickListener = new SeriesFilterClickListener();
 		seriesFilterList.setOnItemClickListener(seriesFilterClickListener);
 
 		readFilterList = (ListView) findViewById(R.id.read_filter);
 		readFilterTitle = (TextView) findViewById(R.id.filter_by_read);
 		readFilters = this.getResources().getStringArray(R.array.readFilter);
-		readFilterList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, readFilters));
+		readFilterList.setAdapter(new DrawerFilterAdapter(this, R.layout.list_item, readFilters));
 		ReadFilterClickListener readFilterClickListener = new ReadFilterClickListener();
 		readFilterList.setOnItemClickListener(readFilterClickListener);
 
