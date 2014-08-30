@@ -12,6 +12,14 @@
     <string name="read_filter_title">Filter by read status</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_view">ViewActivity</string>
+    <string name="press_again_to_exit">Press back again to exit</string>
+    <string name="sync_library_popup_title">Sync Library</string>
+    <string name="sync_library_popup_message">Are you sure you want sync the library?</string>
+    <string name="read_something_first">Read something first</string>
+    <string name="set_library_folders_first">Set library folders in settings before syncing</string>
+    <string name="library_syncing">Library Syncing</string>
+    <string name="library_syncing_failed_to_start">Sync did not start</string>
+    <string name="error_closing_progress_dialog">Error closing progress dialog</string>
     <string name="app_about">Homepage : https://github.com/rlach/opencomicreader \n\n
         Developers\n -
         Areinu\n 

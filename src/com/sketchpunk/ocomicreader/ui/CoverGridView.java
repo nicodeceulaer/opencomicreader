@@ -28,7 +28,7 @@ import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
-import com.sketchpunk.ocomicreader.R;
+import com.runeai.runecomicreader.R;
 import com.sketchpunk.ocomicreader.ViewActivity;
 import com.sketchpunk.ocomicreader.lib.ComicDatabaseLoader;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;

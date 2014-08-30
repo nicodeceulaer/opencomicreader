@@ -35,6 +35,7 @@ import android.widget.Toast;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.runeai.runecomicreader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
@@ -53,6 +54,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	private String[] readFilters;
 	private String[] seriesFilters;
 	private SharedPreferences prefs;
+	private long backPressed;
 
 	/*
 	 * ======================================================== Main
@@ -297,7 +299,12 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		} else if (mDrawerLayout.isDrawerOpen(mFiltersDrawer)) {
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
 		} else {
-			super.onBackPressed();
+			if (backPressed + 2000 > System.currentTimeMillis()) {
+				super.onBackPressed();
+			} else {
+				Toast.makeText(getBaseContext(), R.string.press_again_to_exit, Toast.LENGTH_SHORT).show();
+				backPressed = System.currentTimeMillis();
+			}
 		}
 	}// func
 
@@ -309,12 +316,13 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}
 
 	private void showSyncDialog() {
-		sage.ui.Dialogs.ConfirmBox(this, "Sync Library", "Are you sure you want sync the library?", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int id) {
-				startSync();
-			}
-		});
+		sage.ui.Dialogs.ConfirmBox(this, getString(R.string.sync_library_popup_title), getString(R.string.sync_library_popup_message),
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						startSync();
+					}
+				});
 	}
 
 	private void goToLastComic() {
@@ -335,7 +343,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			intent.putExtra("comicid", lastRead.getId());
 			this.startActivityForResult(intent, 0);
 		} else {
-			Toast.makeText(this, "Read some comic first", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, getString(R.string.read_something_first), Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -346,14 +354,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		if (ComicLibrary.startSync(this)) {
 			if (mProgress != null) {
 				if (!mProgress.isShowing()) {
-					mProgress.show(this, "Library Syncing", "", true);
+					mProgress.show(this, getString(R.string.library_syncing), "", true);
 					return;
 				}// if
 			}// if
 
-			mProgress = ProgressDialog.show(this, "Library Syncing", "", true);
+			mProgress = ProgressDialog.show(this, getString(R.string.library_syncing), "", true);
 		} else {
-			Toast.makeText(this, "Sync did not start", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, getString(R.string.library_syncing_failed_to_start), Toast.LENGTH_SHORT).show();
 		}// if
 	}// func
 
@@ -376,7 +384,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 				mProgress = null;
 			}// if
 		} catch (Exception e) {
-			Toast.makeText(this, "Error closing progress dialog", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, getString(R.string.error_closing_progress_dialog), Toast.LENGTH_LONG).show();
 		}// try
 
 		// ............................................
@@ -385,7 +393,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			mGridView.refreshData();
 			break;
 		case ComicLibrary.STATUS_NOSETTINGS:
-			Toast.makeText(this, "No sync folders have been set. Go to settings.", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, getString(R.string.set_library_folders_first), Toast.LENGTH_LONG).show();
 			break;
 		}// switch
 	}// func
