@@ -65,6 +65,7 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 		Comic comic = data.get(position);
 
 		if (comic.isCoverExists()) {
+			holder.imageCover.setImageBitmap(null);
 			File file = new File(ComicLibrary.getThumbCachePath() + comic.getId() + ".jpg");
 			if (file.exists()) {
 				LoadImageView.loadImage(file.getPath(), holder.imageCover, context);
