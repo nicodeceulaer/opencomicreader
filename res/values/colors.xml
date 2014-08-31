@@ -3,4 +3,8 @@
     <color name="coverPressHighlight">#88000000</color>
     <color name="default_list_color">#88FFFFFF</color>
     <color name="pressed_list_color">#88DDDDDD</color>
+    <color name="list_item_pressed">#8833b6ea</color>
+    <color name="list_item_checked">#8833b6ea</color>
+    <color name="list_item_activated">#8833b6ea</color>
+    <color name="list_item_disabled">#FFE0E0E0</color>
 </resources>

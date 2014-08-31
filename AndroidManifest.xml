@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.runeai.runecomicreader"
+    package="com.runeai.runereader"
     android:versionCode="15"
     android:versionName="0.2.1.2 beta" >
 
@@ -21,8 +21,8 @@
         <activity
             android:name="com.sketchpunk.ocomicreader.ViewActivity"
             android:configChanges="orientation|screenSize"
-            android:label="Open Comic Reader"
-            android:theme="@android:style/Theme.Holo.NoActionBar" >
+            android:label="Rune Reader"
+            android:theme="@style/android:Theme.Holo.NoActionBar" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
@@ -58,18 +58,18 @@
         
         <activity
             android:name="com.sketchpunk.ocomicreader.PrefActivity"
-            android:theme="@android:style/Theme.Holo" >
+            android:theme="@style/AppTheme" >
         </activity>
         
         <activity
             android:name="com.sketchpunk.ocomicreader.OpenGLESTestingActivity"
-            android:theme="@android:style/Theme.Holo" >
+            android:theme="@style/AppTheme" >
         </activity>
         
         <activity
             android:name="com.sketchpunk.ocomicreader.LibraryActivity"
-            android:label="Open Comic Reader"
-            android:theme="@android:style/Theme.Holo">
+            android:label="Rune Reader"
+            android:theme="@style/AppTheme">
             
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

@@ -20,6 +20,7 @@ import android.util.AttributeSet;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -28,7 +29,7 @@ import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
-import com.runeai.runecomicreader.R;
+import com.runeai.runereader.R;
 import com.sketchpunk.ocomicreader.ViewActivity;
 import com.sketchpunk.ocomicreader.lib.ComicDatabaseLoader;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
@@ -193,6 +194,12 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		menu.add(0, 3, 2, "Mark as Read");
 		menu.add(0, 4, 3, "Edit Series Name");
 	}// func
+
+	@Override
+	public boolean onTouchEvent(MotionEvent ev) {
+		requestFocus();
+		return super.onTouchEvent(ev);
+	}
 
 	public boolean contextItemSelected(MenuItem item) {
 		int itmID = item.getItemId();

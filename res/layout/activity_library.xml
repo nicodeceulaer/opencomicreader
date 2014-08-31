@@ -22,6 +22,7 @@
             android:numColumns="2"
             android:scrollbarStyle="insideOverlay"
             android:stretchMode="columnWidth" >
+            <requestFocus />
         </com.sketchpunk.ocomicreader.ui.CoverGridView>
     </RelativeLayout>
 
@@ -79,6 +80,84 @@
             android:choiceMode="singleChoice"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp" />
+        
+        <TextView
+            android:id="@+id/settings_title"
+            android:text="@string/other"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="0dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:paddingTop="0dp"
+            android:textColor="#ffffff"
+            android:textSize="18sp" />
+
+        <RelativeLayout
+            android:id="@+id/sync"
+		    android:background="@drawable/list_activated_background"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="48dp"
+		    android:gravity="left"  
+		    android:padding="5dp">
+
+		    <TextView
+		    android:text="@string/sync"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content"
+		    android:layout_centerVertical="true"
+		    android:layout_alignParentLeft="true"
+		    android:textSize="18sp"
+		    android:gravity="left"  
+		    android:textColor="@color/list_item_font"
+		    android:padding="5dp" />
+    
+    	</RelativeLayout>        
+    	
+        
+        <RelativeLayout
+            android:id="@+id/about"
+		    android:background="@drawable/list_activated_background"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="48dp"
+		    android:gravity="left"  
+		    android:padding="5dp">
+
+		    <TextView
+		    android:text="@string/about"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content"
+		    android:layout_centerVertical="true"
+		    android:layout_alignParentLeft="true"
+		    android:textSize="18sp"
+		    android:gravity="left"  
+		    android:textColor="@color/list_item_font"
+		    android:padding="5dp" />
+    
+    	</RelativeLayout>
+    	
+        <RelativeLayout
+            android:id="@+id/settings"
+		    android:background="@drawable/list_activated_background"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="48dp"
+		    android:gravity="left"  
+		    android:padding="5dp">
+
+		    <TextView
+		    android:text="@string/settings"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content"
+		    android:layout_centerVertical="true"
+		    android:layout_alignParentLeft="true"
+		    android:textSize="18sp"
+		    android:gravity="left"  
+		    android:textColor="@color/list_item_font"
+		    android:padding="5dp" />
+    
+    	</RelativeLayout>        
     </LinearLayout>
 
 </android.support.v4.widget.DrawerLayout>

@@ -1,11 +1,11 @@
 package com.sketchpunk.ocomicreader.lib;
 
-import com.sketchpunk.ocomicreader.ui.GestureImageView;
-
 import android.animation.ValueAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.view.View;
+
+import com.sketchpunk.ocomicreader.ui.GestureImageView;
 
 public class ImgTransform{
 	public static final int SCALE_NONE = 0;

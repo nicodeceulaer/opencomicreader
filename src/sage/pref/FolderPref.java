@@ -16,7 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.runeai.runecomicreader.R;
+import com.runeai.runereader.R;
 
 public class FolderPref extends DialogPreference implements DialogInterface.OnClickListener, MapAdapter.AdapterCallback, AdapterView.OnItemClickListener {
 	private ListView mListView;

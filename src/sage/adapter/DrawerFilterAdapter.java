@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.sketchpunk.ocomicreader.R;
+import com.runeai.runereader.R;
 
 public class DrawerFilterAdapter extends ArrayAdapter<String> {
 

@@ -44,17 +44,13 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
 		try {
 			if (mSeriesFilterMode == 1 && mSeriesFilter.isEmpty()) {// Filter by series
-				// sql =
-				// "SELECT min(comicID) [_id],series [title],sum(pgCount) [pgCount],sum(pgRead) [pgRead],min(isCoverExists) [isCoverExists],count(comicID) [cntIssue] FROM ComicLibrary GROUP BY series ORDER BY series";
-				GenericRawResults<String[]> rawResults = comicDao
-						.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 1 GROUP BY LOWER(series) ORDER BY LOWER(series)");
+				GenericRawResults<String[]> rawResults = comicDao.queryRaw(getSeriesSearchString(1));
 				data = new ArrayList<Comic>();
 				for (String[] resultArray : rawResults) {
 					Comic seriesResult = parseRawComicSeriesResults(resultArray);
 					data.add(seriesResult);
 				}
-				GenericRawResults<String[]> rawResultsWithoutCovers = comicDao
-						.queryRaw("SELECT min(id)[id], series[title], sum(pageCount)[pageCount], coverExists, sum(pageRead)[pageRead], count(id) [issue] FROM comics WHERE coverExists = 0 GROUP BY LOWER(series) ORDER BY LOWER(series)");
+				GenericRawResults<String[]> rawResultsWithoutCovers = comicDao.queryRaw(getSeriesSearchString(0));
 
 				for (String[] resultArray : rawResultsWithoutCovers) {
 					Comic seriesResult = parseRawComicSeriesResults(resultArray);
@@ -112,6 +108,35 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 		}
 
 		return data;
+	}
+
+	//@formatter:off
+	private String getSeriesSearchString(int coverExists) {
+		return "SELECT min(id)[id], " +
+				"series[title], " +
+				"sum(pageCount)[pageCount], " +
+				"coverExists, " +
+				"sum(pageRead)[pageRead], " +
+				"count(id) [issue] " +
+				"FROM comics " +
+				"WHERE coverExists = " + coverExists + " " +
+				getReadFilterStringForSeries() +
+				"GROUP BY LOWER(series) " +
+				"ORDER BY LOWER(series)";
+	}
+	//@formatter:on
+
+	private String getReadFilterStringForSeries() {
+		switch (mReadFilterMode) {
+		default:
+			return "";
+		case 1:
+			return "AND pageRead = 0 ";
+		case 2:
+			return "AND pageRead > 0 AND pageRead < pageCount - 1 ";
+		case 3:
+			return "AND pageRead >= pageCount - 1 ";
+		}// switch
 	}
 
 	private Comic parseRawComicSeriesResults(String[] resultArray) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/filter_list_item"
-    android:background="?android:attr/activatedBackgroundIndicator"
+    android:background="@drawable/list_activated_background"
     android:layout_width="fill_parent" 
     android:layout_height="48dp"
     android:gravity="left"  
@@ -15,7 +15,7 @@
     android:layout_alignParentLeft="true"
     android:textSize="18sp"
     android:gravity="left"  
-    android:textColor="#FFFFFF"         
+    android:textColor="@color/list_item_font"
     android:padding="5dp" />
     
     </RelativeLayout>

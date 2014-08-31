@@ -10,8 +10,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -26,16 +26,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
-import com.runeai.runecomicreader.R;
+import com.runeai.runereader.R;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
@@ -45,7 +43,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	private ProgressDialog mProgress;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
 	private DrawerLayout mDrawerLayout;
-	private LinearLayout mFiltersDrawer;
+	private View mFiltersDrawer;
 	private ActionBarDrawerToggle mDrawerToggle;
 	private ListView readFilterList;
 	private ListView seriesFilterList;
@@ -75,23 +73,9 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		mTitle = getTitle();
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		// ....................................
-		// setup background
-		RelativeLayout mLayouts = (RelativeLayout) findViewById(R.id.MainLayout);
-		mLayouts.setBackgroundColor(Color.parseColor("#FF000000"));
-
-		/*
-		 * switch(Integer.parseInt(prefs.getString("libraryBackground","0"))){ case 0: //Solid
-		 * 
-		 * break; case 1: //opaque RelativeLayout mLayouto = (RelativeLayout) findViewById(R.id.MainLayout);
-		 * mLayouto.setBackgroundColor(Color.parseColor("#BB000000")); break; case 2: //WallPaper final WallpaperManager wm=WallpaperManager.getInstance(this);
-		 * ///WallpaperInfo wi=wm.getWallpaperInfo(); ///wm.getDrawable(); final Drawable wallpaperDrawable = wm.getFastDrawable();
-		 * getWindow().setBackgroundDrawable(wallpaperDrawable); break; }//switch
-		 */
-		// ....................................
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mFiltersDrawer = (LinearLayout) findViewById(R.id.filters_drawer);
+		mFiltersDrawer = findViewById(R.id.filters_drawer);
 
 		seriesFilterList = (ListView) findViewById(R.id.series_filter);
 		seriesFilters = this.getResources().getStringArray(R.array.libraryFilter);
@@ -157,7 +141,23 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		getActionBar().setHomeButtonEnabled(true);
 
+		showNavigationDrawerOnFirstRun();
+
 	}// func
+
+	private void showNavigationDrawerOnFirstRun() {
+		boolean isFirstRun = prefs.getBoolean("isFirstRun", true);
+		if (isFirstRun) {
+			mDrawerLayout.openDrawer(mFiltersDrawer);
+			noteFirstRunIsDone();
+		}
+	}
+
+	private void noteFirstRunIsDone() {
+		Editor e = prefs.edit();
+		e.putBoolean("isFirstRun", false);
+		e.commit();
+	}
 
 	protected void generateTitle() {
 		int seriesFilterMode = mGridView.getSeriesFilterMode();
@@ -412,11 +412,11 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	private void setReadFilterVisibility() {
 		if (mGridView.getSeriesFilterMode() == 1 && (mGridView.getSeriesFilter() == null || mGridView.getSeriesFilter().isEmpty())) {
-			readFilterList.setVisibility(View.GONE);
-			readFilterTitle.setVisibility(View.GONE);
+			// readFilterList.setEnabled(false);
+			// readFilterTitle.setEnabled(false);
 		} else {
-			readFilterList.setVisibility(View.VISIBLE);
-			readFilterTitle.setVisibility(View.VISIBLE);
+			// readFilterList.setEnabled(true);
+			// readFilterTitle.setEnabled(true);
 		}
 	}
 

@@ -10,7 +10,7 @@ import android.view.WindowManager;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
-import com.runeai.runecomicreader.R;
+import com.runeai.runereader.R;
 
 public class Dialogs {
 	public static void About(Context context, CharSequence sMsg) {
