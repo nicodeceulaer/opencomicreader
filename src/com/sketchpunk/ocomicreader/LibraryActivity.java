@@ -1,8 +1,12 @@
 package com.sketchpunk.ocomicreader;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
-import sage.adapter.DrawerFilterAdapter;
+import sage.adapter.LibraryDrawerAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
 import android.app.ProgressDialog;
@@ -24,10 +28,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
@@ -39,20 +41,19 @@ import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
 public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, CoverGridView.iCallback {
 
+	private static final int SERIES_GROUP = 0;
+	private static final int READING_GROUP = 1;
 	private CoverGridView mGridView;
 	private ProgressDialog mProgress;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
 	private DrawerLayout mDrawerLayout;
 	private View mFiltersDrawer;
 	private ActionBarDrawerToggle mDrawerToggle;
-	private ListView readFilterList;
-	private ListView seriesFilterList;
-	private TextView readFilterTitle;
-	private CharSequence mTitle;
 	private String[] readFilters;
 	private String[] seriesFilters;
 	private SharedPreferences prefs;
 	private long backPressed;
+	DrawerChildClickListener drawerChildClickListener;
 
 	/*
 	 * ======================================================== Main
@@ -70,25 +71,12 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		setContentView(R.layout.activity_library);
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
 
-		mTitle = getTitle();
-
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mFiltersDrawer = findViewById(R.id.filters_drawer);
 
-		seriesFilterList = (ListView) findViewById(R.id.series_filter);
-		seriesFilters = this.getResources().getStringArray(R.array.libraryFilter);
-		seriesFilterList.setAdapter(new DrawerFilterAdapter(this, R.layout.list_item, seriesFilters));
-		SeriesFilterClickListener seriesFilterClickListener = new SeriesFilterClickListener();
-		seriesFilterList.setOnItemClickListener(seriesFilterClickListener);
-
-		readFilterList = (ListView) findViewById(R.id.read_filter);
-		readFilterTitle = (TextView) findViewById(R.id.filter_by_read);
-		readFilters = this.getResources().getStringArray(R.array.readFilter);
-		readFilterList.setAdapter(new DrawerFilterAdapter(this, R.layout.list_item, readFilters));
-		ReadFilterClickListener readFilterClickListener = new ReadFilterClickListener();
-		readFilterList.setOnItemClickListener(readFilterClickListener);
+		prepareDrawer();
 
 		mGridView = (CoverGridView) findViewById(R.id.lvMain);
 
@@ -127,10 +115,8 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			mGridView.setReadFilterMode(prefs.getInt("readFilter", 0));
 		}// if
 
-		seriesFilterList.setItemChecked(mGridView.getSeriesFilterMode(), true);
-		readFilterList.setItemChecked(mGridView.getReadFilterMode(), true);
-		setReadFilterVisibility();
 		generateTitle();
+		checkInitialDrawerOptions();
 
 		// ....................................
 		// int barHeight =
@@ -144,6 +130,75 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		showNavigationDrawerOnFirstRun();
 
 	}// func
+
+	ExpandableListView expListView;
+	LibraryDrawerAdapter listAdapter;
+	List<String> listDataHeader;
+	HashMap<String, List<String>> listDataChild;
+
+	private void prepareDrawer() {
+		// get the listview
+		expListView = (ExpandableListView) findViewById(R.id.drawer_content);
+
+		// preparing list data
+		prepareListData();
+
+		listAdapter = new LibraryDrawerAdapter(this, listDataHeader, listDataChild);
+
+		// setting list adapter
+		expListView.setAdapter(listAdapter);
+		expListView.setGroupIndicator(null);
+
+		expandAllDrawerGroups();
+		disableDrawerGroupsContracting();
+
+		addDrawerChildClickListener();
+	}
+
+	private void checkInitialDrawerOptions() {
+		drawerChildClickListener.checkItem(SERIES_GROUP, mGridView.getSeriesFilterMode());
+		drawerChildClickListener.checkItem(READING_GROUP, mGridView.getReadFilterMode());
+	}
+
+	private void addDrawerChildClickListener() {
+		drawerChildClickListener = new DrawerChildClickListener();
+		expListView.setOnChildClickListener(drawerChildClickListener);
+	}
+
+	private void disableDrawerGroupsContracting() {
+		expListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+
+			@Override
+			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+				return true;
+			}
+		});
+	}
+
+	private void expandAllDrawerGroups() {
+		for (int i = 0; i < listDataHeader.size(); i++) {
+			expListView.expandGroup(i);
+		}
+	}
+
+	private void prepareListData() {
+		listDataHeader = new ArrayList<String>();
+		listDataChild = new HashMap<String, List<String>>();
+
+		// Adding child data
+		listDataHeader.add(getString(R.string.series_filter_title));
+		listDataHeader.add(getString(R.string.read_filter_title));
+		listDataHeader.add(getString(R.string.other));
+
+		// Adding child data
+		seriesFilters = this.getResources().getStringArray(R.array.seriesFilter);
+		readFilters = this.getResources().getStringArray(R.array.readFilter);
+		List<String> other = Arrays.asList(this.getResources().getStringArray(R.array.other));
+
+		listDataChild.put(listDataHeader.get(0), Arrays.asList(seriesFilters)); // Header, Child data
+		listDataChild.put(listDataHeader.get(1), Arrays.asList(readFilters));
+		listDataChild.put(listDataHeader.get(2), other);
+	}
 
 	private void showNavigationDrawerOnFirstRun() {
 		boolean isFirstRun = prefs.getBoolean("isFirstRun", true);
@@ -166,22 +221,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		getActionBar().setSubtitle(null);
 		if (seriesFilterMode <= 0) {
-			if (readingFilterMode > 0) {
-				getActionBar().setTitle(readFilters[readingFilterMode]);
-			} else {
-				getActionBar().setTitle(mTitle);
-			}
+			getActionBar().setTitle(readFilters[readingFilterMode]);
 		} else {
-			if (seriesFilterMode == 1 && seriesFilter.isEmpty()) {
-				getActionBar().setTitle(seriesFilters[seriesFilterMode]);
+			if (!seriesFilter.isEmpty()) {
+				getActionBar().setTitle(seriesFilter);
 			} else {
-				if (!seriesFilter.isEmpty()) {
-					getActionBar().setTitle(seriesFilter);
-				} else {
-					getActionBar().setTitle(seriesFilters[seriesFilterMode]);
-				}
-				generateSubtitle(readingFilterMode);
+				getActionBar().setTitle(seriesFilters[seriesFilterMode]);
 			}
+			generateSubtitle(readingFilterMode);
 		}
 	}
 
@@ -194,7 +241,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		// Sync the toggle state after onRestoreInstanceState has occurred.
 		mDrawerToggle.syncState();
 	}
 
@@ -226,15 +272,23 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			showSyncDialog();
 			return true;
 		case R.id.menu_settings:
-			Intent intent = new Intent(this, PrefActivity.class);
-			this.startActivityForResult(intent, 0);
+			goToSettings();
 			return true;
 		case R.id.menu_about:
-			sage.ui.Dialogs.About(this, this.getText(R.string.app_about));
+			showAbout();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void showAbout() {
+		sage.ui.Dialogs.About(this, this.getText(R.string.app_about));
+	}
+
+	private void goToSettings() {
+		Intent intent = new Intent(this, PrefActivity.class);
+		this.startActivityForResult(intent, 0);
 	}
 
 	@Override
@@ -245,12 +299,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		siState.putInt("mReadFilterMode", mGridView.getReadFilterMode());
 		super.onSaveInstanceState(siState);
 	}// func
-
-	// @Override
-	// public boolean onCreateOptionsMenu(Menu menu) { //Todo:remove
-	// getMenuInflater().inflate(R.menu.activity_main, menu);
-	// return true;
-	// }//func
 
 	/*
 	 * ======================================================== State
@@ -405,67 +453,113 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		if (mGridView.isSeriesFiltered()) {// Filter by series
 			if (!mGridView.getSeriesFilter().isEmpty()) {
 				generateTitle();
-				setReadFilterVisibility();
 			}// if
 		}// if
 	}// func
 
-	private void setReadFilterVisibility() {
-		if (mGridView.getSeriesFilterMode() == 1 && (mGridView.getSeriesFilter() == null || mGridView.getSeriesFilter().isEmpty())) {
-			// readFilterList.setEnabled(false);
-			// readFilterTitle.setEnabled(false);
-		} else {
-			// readFilterList.setEnabled(true);
-			// readFilterTitle.setEnabled(true);
-		}
-	}
-
-	private class SeriesFilterClickListener implements OnItemClickListener {
-		private final View previousView = null;
+	private class DrawerChildClickListener implements OnChildClickListener {
+		private final View previousSeriesView = null;
+		private final View previousReadView = null;
 
 		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			if (previousView != null) {
-				previousView.setPressed(false);
+		public boolean onChildClick(ExpandableListView parent, View view, int groupPosition, int childPosition, long id) {
+			if (groupPosition < 2) {
+				checkItem(groupPosition, childPosition);
 			}
-			view.setPressed(true);
-			prefs.edit().putInt("seriesFilter", position).commit();
-			selectItem(position);
+			switch (groupPosition) {
+			case SERIES_GROUP:
+				return onSeriesSelected(view, childPosition);
+			case READING_GROUP:
+				return onReadSelected(view, childPosition);
+			case 2:
+				return onSettingSelected(childPosition);
+			default:
+				return false;
+			}
 		}
 
-		private void selectItem(int position) {
+		public void checkItem(int groupPosition, int childPosition) {
+			int startingId = getGroupStartingId(groupPosition);
+			uncheckAllGroupOptions(groupPosition, startingId);
+			expListView.setItemChecked(startingId + childPosition, true);
+		}
+
+		private void uncheckAllGroupOptions(int groupPosition, int startingId) {
+			for (int i = startingId; i < startingId + listAdapter.getChildrenCount(groupPosition); i++) {
+				expListView.setItemChecked(i, false);
+			}
+		}
+
+		private int getGroupStartingId(int groupPosition) {
+			int position = 0;
+			for (int i = 0; i < groupPosition; i++) {
+				position += listAdapter.getChildrenCount(i) + 0;
+			}
+			position += groupPosition + 1; // group titles
+			return position;
+		}
+
+		private boolean onSettingSelected(int position) {
+			switch (position) {
+			case 0: // Sync
+				showSyncDialog();
+				return true;
+			case 1: // Settings
+				goToSettings();
+				break;
+			case 2: // About
+				showAbout();
+				return true;
+			default:
+				return false;
+			}
+
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+			return true;
+		}
+
+		private boolean onReadSelected(View view, int position) {
+			unpress(previousReadView);
+
+			view.setPressed(true);
+			prefs.edit().putInt("readFilter", position).commit();
+
+			updateReadFilter(position);
+
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+			return true;
+		}
+
+		private boolean onSeriesSelected(View view, int position) {
+			unpress(previousSeriesView);
+
+			view.setPressed(true);
+			prefs.edit().putInt("seriesFilter", position).commit();
+
+			updateSeriesFilter(position);
+
+			mDrawerLayout.closeDrawer(mFiltersDrawer);
+			return true;
+		}
+
+		private void unpress(View previous) {
+			if (previous != null) {
+				previous.setPressed(false);
+			}
+		}
+
+		private void updateSeriesFilter(int position) {
 			if (mGridView.getSeriesFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
 				mGridView.setSeriesFilterMode(position);
 				mGridView.refreshData();
 			}
-
-			setReadFilterVisibility();
-
-			mDrawerLayout.closeDrawer(mFiltersDrawer);
-		}
-	}
-
-	private class ReadFilterClickListener implements OnItemClickListener {
-		private View previousView = null;
-
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			if (previousView != null) {
-				previousView.setPressed(false);
-			}
-			view.setPressed(true);
-			previousView = view;
-			prefs.edit().putInt("readFilter", position).commit();
-			selectItem(position);
 		}
 
-		private void selectItem(int position) {
+		private void updateReadFilter(int position) {
 			if (mGridView.getReadFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
 				mGridView.setReadFilterMode(position);
 				mGridView.refreshData();
 			}
-
-			mDrawerLayout.closeDrawer(mFiltersDrawer);
 		}
 	}
 }// cls
