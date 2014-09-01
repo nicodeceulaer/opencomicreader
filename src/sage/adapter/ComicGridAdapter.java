@@ -1,6 +1,7 @@
 package sage.adapter;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import sage.data.domain.Comic;
@@ -83,9 +84,9 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 		return convertView;
 	}
 
-	public static class ViewHolder {
+	public class ViewHolder {
 		public Integer id = null;
-		public Bitmap bitmap = null;
+		public WeakReference<Bitmap> bitmap = null;
 		public String seriesName = null;
 		public TextView libraryTitle;
 		public TextView issueNumber;
@@ -104,13 +105,13 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 										// show that it didn't.
 
 		ViewHolder itmRef = (ViewHolder) iv.getTag();
-		if (itmRef.bitmap != null) {
-			itmRef.bitmap.recycle();
+		if (itmRef.bitmap != null && itmRef.bitmap.get() != null) {
+			itmRef.bitmap.get().recycle();
 			itmRef.bitmap = null;
 		}
 
-		itmRef.bitmap = bmp; // keeping reference to make sure to clear it out
-								// when its not needed
+		itmRef.bitmap = new WeakReference<Bitmap>(bmp); // keeping reference to make sure to clear it out
+		// when its not needed
 	}
 
 }

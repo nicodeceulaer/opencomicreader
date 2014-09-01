@@ -166,6 +166,10 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		}// if
 	}// func
 
+	public void clearData() {
+		mAdapter.clear();
+	}
+
 	public void refreshData() {
 		setFilteringOptions();
 		getLoaderManager().restartLoader(0, null, this);
@@ -306,10 +310,6 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 
 		return true;
 	}// func
-
-	public void onPause() {
-		mAdapter.clear();
-	}
 
 	@Override
 	public void onLoadFinished(Loader<Collection<Comic>> arg0, Collection<Comic> arg1) {

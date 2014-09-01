@@ -150,14 +150,15 @@ public class PageLoader {
 					break; // exit loop, successful loading of image.
 				} catch (OutOfMemoryError e) {
 					System.out.println("-----Out of memory error " + Integer.toString(iScale));
-					iScale *= 2;
+					if (i < 3) {
+						iScale *= 2;
+					}
 
-					// If the first 2 attempt fail, scale down plus lower quality
-					if (i == 2)
+					if (i == 3)
 						bmpOption.inPreferredConfig = Bitmap.Config.RGB_565; // Try to use up less memory
 
 					// if forth attempt, give up.
-					if (i == 3) {
+					if (i == 4) {
 						errMsg = "Out of memory loading image";
 						System.out.println(errMsg);
 						if (bmp != null)

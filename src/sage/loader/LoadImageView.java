@@ -102,12 +102,47 @@ public class LoadImageView {
 					return null;
 				}
 
-				return BitmapFactory.decodeFile(imagePath, null);
+				BitmapFactory.Options bmpOption = new BitmapFactory.Options();
+
+				try {
+					bmpOption.inJustDecodeBounds = true;
+					BitmapFactory.decodeFile(imagePath, bmpOption);
+
+					if (mImgView != null && mImgView.get() != null) {
+						bmpOption.inSampleSize = calculateInSampleSize(bmpOption, mImgView.get().getWidth(), mImgView.get().getHeight());
+					}
+				} catch (Exception e) {
+					System.out.println("Error Getting Image Size " + e.getMessage());
+				}// try
+
+				bmpOption.inJustDecodeBounds = false;
+				return BitmapFactory.decodeFile(imagePath, bmpOption);
 			} catch (OutOfMemoryError ex) {
 				Log.e("memory", "Coudln't load thumbnail file for " + imagePath + " due to OutOfMemoryError " + ex.getMessage());
 			}
 			return null;
 		}// func
+
+		public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+			// Raw height and width of image
+			final int height = options.outHeight;
+			final int width = options.outWidth;
+			int inSampleSize = 1;
+
+			if (height > reqHeight || width > reqWidth) {
+
+				final int halfHeight = height / 2;
+				final int halfWidth = width / 2;
+
+				// Calculate the largest inSampleSize value that is a power of 2 and keeps both
+				// height and width larger than the requested height and width.
+				while ((halfHeight / inSampleSize) > reqHeight && (halfWidth / inSampleSize) > reqWidth) {
+					inSampleSize *= 2;
+				}
+			}
+
+			return inSampleSize;
+		}
 
 		@Override
 		protected void onPostExecute(Object bmp) {
