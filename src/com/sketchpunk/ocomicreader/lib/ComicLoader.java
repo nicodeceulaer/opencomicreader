@@ -1,6 +1,8 @@
 package com.sketchpunk.ocomicreader.lib;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
@@ -9,15 +11,15 @@ import sage.io.DiskCache;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
-import android.widget.Toast;
+import android.util.Log;
 
+import com.micabyte.android.graphics.BitmapSurfaceRenderer;
 import com.sketchpunk.ocomicreader.OpenGLESTestingActivity;
-import com.sketchpunk.ocomicreader.ui.GestureImageView;
 
-public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImageLoadingListener,LoadImageView.OnImageLoadedListener{
+public class ComicLoader {
 	public static interface ComicLoaderListener {
 		public void onPageLoaded(boolean isSuccess, int currentPage);
 	}// interface
@@ -58,25 +60,20 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	private int mPageLen, mCurrentPage;
 
 	private int mMaxSize;
-	private final int mPreloadSize;
 	private WeakReference<ComicLoaderListener> mListener;
 
-	private WeakReference<GestureImageView> mImageView;
-	private final PageLoader mPageLoader;
+	private WeakReference<BitmapSurfaceRenderer> imageRenderer;
 	private iComicArchive mArchive;
 	private List<String> mPageList;
-	private WeakReference<Context> mContext = null;
 	private final DiskCache mCache;
 	private CacheLoader mCacheLoader = null;
 
-	public ComicLoader(Context context, GestureImageView o) {
-		mImageView = new WeakReference<GestureImageView>(o);
-		mContext = new WeakReference<Context>(context);
+	public ComicLoader(Context context, BitmapSurfaceRenderer renderer) {
+		imageRenderer = new WeakReference<BitmapSurfaceRenderer>(renderer);
 		mCache = new DiskCache(context, "comicLoader", CACHE_SIZE);
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		mMaxSize = prefs.getInt("maxTextureSize", 0);
-		mPreloadSize = prefs.getInt("pagesToPreload", 1);
 
 		if (mMaxSize == 0) {
 			Intent intent = new Intent(context, OpenGLESTestingActivity.class);
@@ -92,7 +89,6 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			mListener = new WeakReference<ComicLoader.ComicLoaderListener>((ComicLoaderListener) context);
 
 		// ............................
-		mPageLoader = new PageLoader(this);
 		mCurrentPage = -1;
 
 	}// func
@@ -113,15 +109,13 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 	Methods*/
 	public boolean close() {
 		try {
-			mPageLoader.close(); // cancel any tasks that may be running.
-
 			if (mArchive != null) {
 				mArchive.close();
 				mArchive = null;
 			}// if
 
 			mListener = null;
-			mImageView = null;
+			imageRenderer = null;
 
 			mCache.clear();
 			mCache.close();
@@ -190,95 +184,34 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		return gotoPage(mCurrentPage - 1);
 	}// func
 
-	/*--------------------------------------------------------
-	Loading*/
-	private void preloadNext() {
-		String pgPath;
-		for (int i = 1; i <= mPreloadSize; i++) {
-			if (mCurrentPage + i >= mPageLen)
-				break; // do not preload over the page limit.
-
-			pgPath = mPageList.get(mCurrentPage + i);
-			if (!mCache.contrainsKey(pgPath)) { // Preload next page if
-												// available.
-				System.out.println("Next Page is not cached " + Integer.toString(i));
-				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 0, true);
-				break;
-			}// if
-		}// for
-	}// func
-
-	private void emptyImageView() {
-		if (mImageView.get() != null) {
-			mImageView.get().recycle();
-			mImageView.get().setImageBitmap(null);
-		}
-	}
-
-	private void loadToImageView(Bitmap bmp) {
-		if (mImageView.get() != null) {
-			mImageView.get().setImageBitmap(bmp);
+	private void loadToImageView(InputStream is) {
+		if (imageRenderer.get() != null) {
+			try {
+				imageRenderer.get().setBitmap(is);
+				imageRenderer.get().zoom(100.0f, new PointF());
+				imageRenderer.get().invalidate();
+			} catch (IOException e) {
+				Log.e("micabyte", "Couldn't set bitmap for image renderer", e);
+			}
 			if (mListener != null && mListener.get() != null)
-				mListener.get().onPageLoaded((bmp != null), mCurrentPage);
+				mListener.get().onPageLoaded((is != null), mCurrentPage);
 		}
-	}// func
-
-	/*--------------------------------------------------------
-	Page Loader Event, Getting images out of the archive.*/
-	@Override
-	public void onImageLoadStarted(boolean isPreloading) {
-		if (!isPreloading) {
-			emptyImageView();
-		}
-	}
-
-	@Override
-	public void onImageLoaded(String errMsg, Bitmap bmp, String imgPath, int imgType) {
-		if (errMsg != null && mContext.get() != null) {
-			Toast.makeText(mContext.get(), errMsg, Toast.LENGTH_LONG).show();
-		}// if
-
-		// ............................................
-		// if we have a new image and an old image.
-		if (bmp != null) {
-			// Load Image Right Away.
-			if (imgType == 1)
-				loadToImageView(bmp);
-
-			mCache.putBitmap(imgPath, bmp);
-			if (imgType == 0) {
-				bmp.recycle();
-				bmp = null;
-			} // No need to load right away, clear out memory.
-
-			bmp = null;
-			preloadNext(); // Check if we can preload the next page
-		}// if
 	}// func
 
 	/*--------------------------------------------------------
 	Task to load images out of the cache folder.*/
-	protected class CacheLoader extends AsyncTask<Integer, Void, Bitmap> {
+	protected class CacheLoader extends AsyncTask<Integer, Void, InputStream> {
 		@Override
-		protected Bitmap doInBackground(Integer... params) {
+		protected InputStream doInBackground(Integer... params) {
 			String pgPath = mPageList.get(mCurrentPage);
-			Bitmap bmp = mCache.getBitmap(pgPath);
-
-			if (bmp == null) { // Not in cache, Call Page Loader
-				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 1, false);
-			} else {// Pass Image to View and check preloading the next image.
-				preloadNext();
-				return bmp;
-			}// if
-
-			return null;
+			return mArchive.getItemInputStream(pgPath);
 		}// func
 
 		@Override
-		protected void onPostExecute(Bitmap bmp) {
-			if (bmp != null) {
-				loadToImageView(bmp);
-				bmp = null;
+		protected void onPostExecute(InputStream inputStream) {
+			if (inputStream != null) {
+				loadToImageView(inputStream);
+				inputStream = null;
 			}
 		}// func
 	}// cls

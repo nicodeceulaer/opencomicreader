@@ -16,7 +16,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.ScaleGestureDetector.OnScaleGestureListener;
 import android.view.View;
 import android.widget.Toast;
 
@@ -24,7 +23,7 @@ import com.sketchpunk.ocomicreader.lib.ImgTransform;
 
 //Transition idea, First image crushes by width, then new image slides in while old is crushed widthwise.
 
-public class GestureImageView extends View implements OnScaleGestureListener, GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
+public class GestureImageView extends View implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
 		MultiFingerGestureDetector.OnGestureListener {
 
 	public static interface OnImageGestureListener {
@@ -96,7 +95,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 		clearScreenForEInk = prefs.getBoolean("clearScreenForEInk", false);
 		showNewImageFramesFor = prefs.getInt("showNewImageFramesFor", 3);
 		mPaintNegative.setColorFilter(colorFilter_Negative);
-		mScaleGesture = new ScaleGestureDetector(context, this);
 		mGesture = new GestureDetector(context, this);
 		mGesture.setOnDoubleTapListener(this);
 		mFingerGesture = new MultiFingerGestureDetector(this);
@@ -290,21 +288,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	}// func
 
 	@Override
-	public boolean onScale(ScaleGestureDetector dScale) {
-		if (mGestureMode == 0)
-			mGestureMode = 1;
-		else if (mGestureMode != 1)
-			return false;
-
-		float ratio = dScale.getScaleFactor();
-		if (mImgTrans.appyScaleRatio(ratio)) {
-			invalidate();
-			return true;
-		}
-		return false;
-	}// func
-
-	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (mGestureMode == 0)
 			mGestureMode = 2;
@@ -402,15 +385,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	@Override
 	public boolean onDown(MotionEvent e) {
 		return true;
-	}
-
-	@Override
-	public boolean onScaleBegin(ScaleGestureDetector dScale) {
-		return true;
-	}
-
-	@Override
-	public void onScaleEnd(ScaleGestureDetector arg0) {
 	}
 
 	@Override

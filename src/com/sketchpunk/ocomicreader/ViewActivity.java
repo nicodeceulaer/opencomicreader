@@ -1,9 +1,6 @@
 package com.sketchpunk.ocomicreader;
 
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
@@ -14,14 +11,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -29,24 +25,21 @@ import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
-import com.j256.ormlite.stmt.QueryBuilder;
+import com.micabyte.android.graphics.BitmapSurfaceRenderer;
+import com.micabyte.android.graphics.MicaSurfaceView;
 import com.runeai.runereader.R;
-import com.sketchpunk.ocomicreader.enums.Direction;
 import com.sketchpunk.ocomicreader.lib.ComicLoader;
-import com.sketchpunk.ocomicreader.lib.ImgTransform;
-import com.sketchpunk.ocomicreader.ui.GestureImageView;
-import com.sketchpunk.ocomicreader.ui.GestureImageView.OnKeyDownListener;
+import com.sketchpunk.ocomicreader.ui.ImageViewController;
 
 //http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html#disk-cache
 //https://github.com/fhucho/simple-disk-cache/blob/master/SimpleDiskCache.java
 //http://stackoverflow.com/questions/10185898/using-disklrucache-in-android-4-0-does-not-provide-for-opencache-method
 //https://github.com/JakeWharton/DiskLruCache/tree/master/src/main/java/com/jakewharton/disklrucache
 
-public class ViewActivity extends Activity implements ComicLoader.ComicLoaderListener, GestureImageView.OnImageGestureListener, OnKeyDownListener,
-		DialogInterface.OnClickListener {
+public class ViewActivity extends Activity implements ComicLoader.ComicLoaderListener, DialogInterface.OnClickListener {
 
 	// TODO, Some of these things need to exist in a RetainFragment.
-	private GestureImageView mImageView; // Main display of image
+	private MicaSurfaceView mImageView; // Main display of image
 	private ComicLoader mComicLoad; // Object that will manage streaming and
 									// scaling images out of the archive file
 	private Integer mComicID = null;
@@ -54,10 +47,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	private Boolean mPref_ShowPgNum = true;
 	private Boolean mPref_ReadRight = true;
 	private Boolean mPref_FullScreen = true;
-	private Boolean mPref_openNextComicOnEnd = true;
+
+	private final ImageViewController controller = new ImageViewController();
 
 	RuntimeExceptionDao<Comic, Integer> comicDao = null;
-	Comic currentComic = null;
 
 	// ------------------------------------------------------------------------
 	// Activty Events
@@ -71,10 +64,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		// ........................................
 		// Get preferences
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		mPref_ShowPgNum = prefs.getBoolean("showPageNum", true);
+		controller.mPref_ShowPgNum = mPref_ShowPgNum = prefs.getBoolean("showPageNum", true);
 		mPref_FullScreen = prefs.getBoolean("fullScreen", true);
-		mPref_ReadRight = prefs.getBoolean("readToRight", true);
-		mPref_openNextComicOnEnd = prefs.getBoolean("openNextComicOnEnd", true);
+		controller.mPref_ReadRight = mPref_ReadRight = prefs.getBoolean("readToRight", true);
+		controller.mPref_openNextComicOnEnd = prefs.getBoolean("openNextComicOnEnd", true);
 
 		int scaleMode = Integer.parseInt(prefs.getString("scaleMode", "3"));
 
@@ -115,20 +108,26 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			Bundle b = intent.getExtras();
 			mComicID = b.getInt("comicid");
 
-			currentComic = comicDao.queryForId(mComicID);
+			controller.currentComic = comicDao.queryForId(mComicID);
 
-			filePath = currentComic.getPath();
-			currentPage = Math.max(currentComic.getPageCurrent(), 0);
+			filePath = controller.currentComic.getPath();
+			currentPage = Math.max(controller.currentComic.getPageCurrent(), 0);
 		}// if
 
 		// .........................................
-		mImageView = (GestureImageView) this.findViewById(R.id.pageView);
-		mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
-		mImageView.setScaleMode(scaleMode);
+		mImageView = (MicaSurfaceView) this.findViewById(R.id.pageView);
+		BitmapSurfaceRenderer renderer = new BitmapSurfaceRenderer(this);
+		mImageView.setListener(controller);
+		controller.renderer = renderer;
+		controller.imageView = mImageView;
+		controller.viewActivity = this;
+		mImageView.setRenderer(renderer);
+		Point center = new Point();
+		renderer.getViewPosition(center);
 		registerForContextMenu(mImageView);
 
 		// .........................................
-		mComicLoad = new ComicLoader(this, mImageView);
+		controller.mComicLoad = mComicLoad = new ComicLoader(this, renderer);
 		if (mComicLoad.loadArchive(filePath)) {
 			if (mPref_ShowPgNum)
 				showToast("Loading Page...", 1);
@@ -141,22 +140,21 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	}// func
 
 	private void updateReadingHistory() {
-		if (currentComic != null) {
-			currentComic.setDateRead(new Date());
-			comicDao.update(currentComic);
+		if (controller.currentComic != null) {
+			controller.currentComic.setDateRead(new Date());
+			comicDao.update(controller.currentComic);
 		}
 	}
 
 	private void getComicDao() {
 		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(getApplicationContext(), DatabaseHelper.class);
-		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+		controller.comicDao = comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
 	}
 
 	@Override
 	public void onDestroy() {
 		OpenHelperManager.releaseHelper();
 		mComicLoad.close();
-		mImageView.recycle();
 		super.onDestroy();
 	}// func
 
@@ -193,20 +191,20 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 		menu.findItem(R.id.mnu_readright).setChecked(mPref_ReadRight);
 
-		switch (mImageView.getScaleMode()) {
-		case ImgTransform.SCALE_NONE:
-			menu.findItem(R.id.mnu_scalen).setChecked(true);
-			break;
-		case ImgTransform.SCALE_HEIGHT:
-			menu.findItem(R.id.mnu_scaleh).setChecked(true);
-			break;
-		case ImgTransform.SCALE_WIDTH:
-			menu.findItem(R.id.mnu_scalew).setChecked(true);
-			break;
-		case ImgTransform.SCALE_AUTO:
-			menu.findItem(R.id.mnu_scalea).setChecked(true);
-			break;
-		}// switch
+		// switch (mImageView.getScaleMode()) {
+		// case ImgTransform.SCALE_NONE:
+		// menu.findItem(R.id.mnu_scalen).setChecked(true);
+		// break;
+		// case ImgTransform.SCALE_HEIGHT:
+		// menu.findItem(R.id.mnu_scaleh).setChecked(true);
+		// break;
+		// case ImgTransform.SCALE_WIDTH:
+		// menu.findItem(R.id.mnu_scalew).setChecked(true);
+		// break;
+		// case ImgTransform.SCALE_AUTO:
+		// menu.findItem(R.id.mnu_scalea).setChecked(true);
+		// break;
+		// }// switch
 
 		switch (ActivityUtil.getScreenOrientation()) {
 		case ActivityUtil.ORIENTATION_DEVICE:
@@ -224,18 +222,18 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.mnu_scaleh:
-			mImageView.setScaleMode(ImgTransform.SCALE_HEIGHT);
-			break;
-		case R.id.mnu_scalew:
-			mImageView.setScaleMode(ImgTransform.SCALE_WIDTH);
-			break;
-		case R.id.mnu_scalen:
-			mImageView.setScaleMode(ImgTransform.SCALE_NONE);
-			break;
-		case R.id.mnu_scalea:
-			mImageView.setScaleMode(ImgTransform.SCALE_AUTO);
-			break;
+		// case R.id.mnu_scaleh:
+		// mImageView.setScaleMode(ImgTransform.SCALE_HEIGHT);
+		// break;
+		// case R.id.mnu_scalew:
+		// mImageView.setScaleMode(ImgTransform.SCALE_WIDTH);
+		// break;
+		// case R.id.mnu_scalen:
+		// mImageView.setScaleMode(ImgTransform.SCALE_NONE);
+		// break;
+		// case R.id.mnu_scalea:
+		// mImageView.setScaleMode(ImgTransform.SCALE_AUTO);
+		// break;
 
 		case R.id.mnu_orientationd:
 			ActivityUtil.setScreenOrientation(this, ActivityUtil.ORIENTATION_DEVICE);
@@ -255,8 +253,8 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			break;
 
 		case R.id.mnu_readright:
-			mPref_ReadRight = (!mPref_ReadRight);
-			mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
+			// mPref_ReadRight = (!mPref_ReadRight);
+			// mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
 			break;
 
 		case R.id.mnu_immersive:
@@ -282,52 +280,18 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			ActivityUtil.setImmersiveModeOn(this);
 	}// func
 
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		// TODO: add config menu to relate actions with keys
-
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_PAGE_UP:
-			progressPage(Direction.LEFT);
-			break;
-		case KeyEvent.KEYCODE_PAGE_DOWN:
-			progressPage(Direction.RIGHT);
-			break;
-		case KeyEvent.KEYCODE_DPAD_CENTER:
-			openContextMenu(mImageView);
-			break;
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-			progressPage(Direction.LEFT);
-			break;
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			progressPage(Direction.RIGHT);
-			break;
-		case KeyEvent.KEYCODE_DPAD_UP:
-			turnPage(Direction.RIGHT);
-			break;
-		case KeyEvent.KEYCODE_DPAD_DOWN:
-			turnPage(Direction.LEFT);
-			break;
-		case KeyEvent.KEYCODE_MENU:
-			openContextMenu(mImageView);
-			break;
-		}
-
-		return super.onKeyDown(keyCode, event);
-	}
-
 	// ------------------------------------------------------------------------
 	// Paging Loading Events
 	@Override
 	public void onPageLoaded(boolean isSuccess, int currentPage) {
 		if (isSuccess) { // Save reading progress.
-			if (currentComic != null) {
+			if (controller.currentComic != null) {
 
-				currentComic.setPageCurrent(currentPage);
-				if (currentComic.getPageRead() < currentPage) {
-					currentComic.setPageRead(currentPage);
+				controller.currentComic.setPageCurrent(currentPage);
+				if (controller.currentComic.getPageRead() < currentPage) {
+					controller.currentComic.setPageRead(currentPage);
 				}
-				comicDao.update(currentComic);
+				comicDao.update(controller.currentComic);
 			}// if
 
 			// ....................................
@@ -337,167 +301,9 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		}// if
 	}// func
 
-	@Override
-	public void onImageGesture(int gType) {
-		switch (gType) {
-		// .....................................
-		case GestureImageView.TWOFINGTAP:
-			openContextMenu(mImageView);
-			return;
-
-			// .....................................
-		case GestureImageView.TAPLEFT:
-			progressPage(Direction.LEFT);
-			break;
-
-		case GestureImageView.TAPRIGHT:
-			progressPage(Direction.RIGHT);
-			break;
-
-		// .....................................
-		case GestureImageView.FLINGLEFT:
-			turnPage(Direction.LEFT);
-			break;
-		case GestureImageView.FLINGRIGHT:
-			turnPage(Direction.RIGHT);
-			break;
-
-		default:
-			return; // Any other gestures not handling, exit right away.
-		}// switch
-	}// func
-
-	private void turnPage(Direction direction) {
-		if (direction != null) {
-			int status = 0;
-			if (direction.equals(Direction.LEFT)) {
-				status = turnPageLeft();
-			} else {
-				status = turnPageRight();
-			}
-			processStatus(status, direction);
-		}
-	}
-
-	private void progressPage(Direction direction) {
-		if (direction != null) {
-			int status = 2;
-			// 2: progressed page
-			// 1: turned page
-			// 0: reached border page
-			// -1: strill preloading
-			if (direction.equals(Direction.LEFT)) {
-				if (!progressPageLeft()) {
-					status = turnPageLeft();
-				}
-			} else {
-				if (!progressPageRight()) {
-					status = turnPageRight();
-				}
-			}
-			processStatus(status, direction);
-		}
-	}
-
-	private void processStatus(int status, Direction direction) {
-		if (status == 0) {
-			boolean firstPage = (direction == Direction.LEFT && mPref_ReadRight || direction == Direction.RIGHT && !mPref_ReadRight);
-			Integer comicToLoad = null;
-
-			if (mPref_openNextComicOnEnd) {
-				comicToLoad = determineComicToLoad(firstPage);
-			}
-
-			if (comicToLoad != null) {
-				moveToAnotherComic(comicToLoad);
-			} else {
-				String msg = firstPage ? "FIRST PAGE" : "LAST PAGE";
-				showToast(msg, 1);
-			}
-		} else if (status == -1) {
-			showToast("Still Preloading, Try again in one second", 1);
-		}
-	}
-
-	private void moveToAnotherComic(Integer comicId) {
-		Intent intent = new Intent(this, ViewActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		intent.putExtra("comicid", comicId);
-		this.startActivity(intent);
-	}
-
-	private Integer determineComicToLoad(boolean firstPage) {
-		Integer result = null;
-
-		if (currentComic != null) {
-			QueryBuilder<Comic, Integer> queryBuilder = comicDao.queryBuilder();
-
-			try {
-				if (firstPage) {
-					queryBuilder.orderBy("issue", false).limit(1L).where().lt("issue", currentComic.getIssue()).and()
-							.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
-				} else {
-					queryBuilder.orderBy("issue", true).limit(1L).where().gt("issue", currentComic.getIssue()).and()
-							.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
-				}
-
-				List<Comic> comics = queryBuilder.query();
-
-				if (comics == null || (comics != null && comics.size() == 0)) {
-					queryBuilder = comicDao.queryBuilder();
-
-					if (firstPage) {
-						queryBuilder.orderByRaw("LOWER(`title`) DESC").limit(1L).where()
-								.raw("LOWER(`title`) < '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'").and()
-								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
-					} else {
-						queryBuilder.orderByRaw("LOWER(`title`) ASC").limit(1L).where()
-								.raw("LOWER(`title`) > '" + currentComic.getTitle().replace("'", "''").toLowerCase(Locale.getDefault()) + "'").and()
-								.raw("LOWER(`series`) = '" + currentComic.getSeries().replace("'", "''").toLowerCase(Locale.getDefault()) + "'");
-					}
-
-					comics = queryBuilder.query();
-				}
-
-				if (comics != null && comics.size() > 0) {
-					result = comics.get(0).getId();
-				}
-			} catch (SQLException e) {
-				Log.e("sql", e.getMessage());
-			}
-		}
-
-		return result;
-	}
-
-	private int turnPageRight() {
-		if (this.mPref_ShowPgNum) {
-			showToast("Loading Page...", 1);
-		}
-		return (mPref_ReadRight) ? mComicLoad.nextPage() : mComicLoad.prevPage();
-	}
-
-	private boolean progressPageRight() {
-		boolean shifted;
-		shifted = (mPref_ReadRight) ? mImageView.shiftRight() : mImageView.shiftLeft_rev();
-		return shifted;
-	}
-
-	private int turnPageLeft() {
-		if (this.mPref_ShowPgNum) {
-			showToast("Loading Page...", 1);
-		}
-		return (mPref_ReadRight) ? mComicLoad.prevPage() : mComicLoad.nextPage();
-	}
-
-	private boolean progressPageLeft() {
-		return (!mPref_ReadRight) ? mImageView.shiftLeft() : mImageView.shiftRight_rev();
-	}
-
 	// ------------------------------------------------------------------------
 	// Helper Functions
-	private void showToast(String msg, int duration) {
+	public void showToast(String msg, int duration) {
 		mToast.setText(msg);
 		mToast.setDuration(duration);
 		mToast.show();
