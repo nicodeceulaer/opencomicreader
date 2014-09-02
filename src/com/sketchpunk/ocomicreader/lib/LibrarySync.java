@@ -313,10 +313,10 @@ public class LibrarySync implements Runnable {
 					comicMeta = archive.getMeta(); // Title,Series,Volume,Issue
 					if (comicMeta != null) {
 						if (!comicMeta[0].isEmpty()) {
-							comic.setTitle(comicMeta[0].replaceAll("'", "''"));
+							comic.setTitle(comicMeta[0]);
 						}
 						if (!comicMeta[1].isEmpty()) {
-							comic.setSeries(comicMeta[1].replaceAll("'", "''"));
+							comic.setSeries(comicMeta[1]);
 						}
 					}// if}
 
@@ -340,14 +340,17 @@ public class LibrarySync implements Runnable {
 
 					// if seriesName ends up being the path, use the parent folder as the series name.
 					if (seriesName.contains("/")) {
-						seriesName = Path.getParentName(comicPath);
-					} else {
-						seriesIssue = sParser.getSeriesIssue(comicPath);
+						seriesName = sParser.getSeriesName(comicPath + ".xxx"); // Parsers rely on 3 char extension being there.
+						if (seriesName.contains("/")) {
+							seriesName = Path.getParentName(comicPath);
+						} else {
+							seriesIssue = sParser.getSeriesIssue(comicPath + ".xxx");
+						}
 					}
 				}// if
 
 				if (!seriesName.isEmpty()) {
-					comic.setSeries(seriesName.replace("'", "''"));
+					comic.setSeries(seriesName);
 					comic.setIssue(seriesIssue);
 					comicDao.update(comic);
 				}
