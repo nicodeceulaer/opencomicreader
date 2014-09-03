@@ -3,6 +3,7 @@ package com.sketchpunk.ocomicreader.lib;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
+import sage.Util;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -23,6 +24,8 @@ public class PageLoader {
 	 */
 	private LoadingTask mTask;
 	private final CallBack mCallBack;
+	private static int width;
+	private static int height;
 
 	public PageLoader(CallBack cb) {
 		mCallBack = cb;
@@ -64,6 +67,22 @@ public class PageLoader {
 
 		return false;
 	}// func
+
+	public int getWidth() {
+		return width;
+	}
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
 
 	// ************************************************************
 	// Load Image through thread
@@ -111,21 +130,10 @@ public class PageLoader {
 				System.out.println("Error Getting Image Size " + e.getMessage());
 			}// try
 
-			System.out.println(bmpOption.outWidth);
-			System.out.println(bmpOption.outHeight);
-
 			// ...................................
 			// Load Up Image
 			int iScale = 1;
-			// Changed equation from ceil to floor, Ceil gives you the right scale under your max where floor gives you the scale closest that is over the max.
-			// Try to get an image scaled as close as possible to the max texture size, then resize it after words to keep as big an image as possible
-			// so it renders better when you need to be zoomed in to see the text.
-			// doing it this way helps prevent out of memory errors and limits retrys on scaling down large images from the very beginning.
-			if (bmpOption.outHeight > maxTextureSize || bmpOption.outWidth > maxTextureSize) {
-				iScale = (int) Math.pow(2,
-						(int) Math.floor(Math.log(maxTextureSize / (double) Math.max(bmpOption.outWidth, bmpOption.outHeight)) / Math.log(0.5)));
-				System.out.println("Test Scale " + Integer.toString(iScale));
-			}// if
+			iScale = Util.calculateInSampleSize(bmpOption, width, height);
 
 			for (int i = 0; i < 4; i++) {
 				try {

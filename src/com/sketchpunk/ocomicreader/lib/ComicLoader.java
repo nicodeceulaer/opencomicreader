@@ -77,6 +77,8 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		mMaxSize = prefs.getInt("maxTextureSize", 0);
 		mPreloadSize = prefs.getInt("pagesToPreload", 1);
+		int screenHeight = prefs.getInt("maxHeight", 1024);
+		int screenWidth = prefs.getInt("maxWidth", 1024);
 
 		if (mMaxSize == 0) {
 			Intent intent = new Intent(context, OpenGLESTestingActivity.class);
@@ -93,6 +95,8 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		// ............................
 		mPageLoader = new PageLoader(this);
+		mPageLoader.setHeight(screenHeight);
+		mPageLoader.setWidth(screenWidth);
 		mCurrentPage = -1;
 
 	}// func

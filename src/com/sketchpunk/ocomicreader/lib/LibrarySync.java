@@ -256,7 +256,7 @@ public class LibrarySync implements Runnable {
 		String[] comicMeta; // Title,Series,Volume,Issue
 		File file;
 		String comicPath, seriesName;
-		int seriesIssue = 0;
+		int seriesIssue;
 		Integer comicID;
 		iComicArchive archive;
 
@@ -330,22 +330,25 @@ public class LibrarySync implements Runnable {
 			// .........................................
 			// if series does not exist, create a series name.
 			seriesName = comic.getSeries();
+			seriesIssue = 0;
 			if (seriesName == null || seriesName.isEmpty() || seriesName.compareToIgnoreCase(ComicLibrary.UKNOWN_SERIES) == 0) {
 				if (mUseFldForSeries)
 					seriesName = Path.getParentName(comicPath);
 				else {
 					if (sParser == null)
 						sParser = new SeriesParser(); // JIT
-					seriesName = sParser.getSeriesName(comicPath);
+					seriesName = sParser.getSeriesName(comicPath.replaceAll("'", ""));
 
 					// if seriesName ends up being the path, use the parent folder as the series name.
 					if (seriesName.contains("/")) {
-						seriesName = sParser.getSeriesName(comicPath + ".xxx"); // Parsers rely on 3 char extension being there.
+						seriesName = sParser.getSeriesName(comicPath.replaceAll("'", "") + ".xxx"); // Parsers rely on 3 char extension being there.
 						if (seriesName.contains("/")) {
 							seriesName = Path.getParentName(comicPath);
 						} else {
-							seriesIssue = sParser.getSeriesIssue(comicPath + ".xxx");
+							seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", "") + ".xxx");
 						}
+					} else {
+						seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", ""));
 					}
 				}// if
 

@@ -3,6 +3,7 @@ package sage.loader;
 import java.io.File;
 import java.lang.ref.WeakReference;
 
+import sage.Util;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -109,7 +110,7 @@ public class LoadImageView {
 					BitmapFactory.decodeFile(imagePath, bmpOption);
 
 					if (mImgView != null && mImgView.get() != null) {
-						bmpOption.inSampleSize = calculateInSampleSize(bmpOption, mImgView.get().getWidth(), mImgView.get().getHeight());
+						bmpOption.inSampleSize = Util.calculateInSampleSize(bmpOption, mImgView.get().getWidth(), mImgView.get().getHeight());
 					}
 				} catch (Exception e) {
 					System.out.println("Error Getting Image Size " + e.getMessage());
@@ -122,27 +123,6 @@ public class LoadImageView {
 			}
 			return null;
 		}// func
-
-		public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-			// Raw height and width of image
-			final int height = options.outHeight;
-			final int width = options.outWidth;
-			int inSampleSize = 1;
-
-			if (height > reqHeight || width > reqWidth) {
-
-				final int halfHeight = height / 2;
-				final int halfWidth = width / 2;
-
-				// Calculate the largest inSampleSize value that is a power of 2 and keeps both
-				// height and width larger than the requested height and width.
-				while ((halfHeight / inSampleSize) > reqHeight && (halfWidth / inSampleSize) > reqWidth) {
-					inSampleSize *= 2;
-				}
-			}
-
-			return inSampleSize;
-		}
 
 		@Override
 		protected void onPostExecute(Object bmp) {

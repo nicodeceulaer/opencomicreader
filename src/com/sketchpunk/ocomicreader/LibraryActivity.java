@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import sage.Util;
 import sage.adapter.LibraryDrawerAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
@@ -16,6 +17,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -72,6 +74,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+		Editor edit = prefs.edit();
+		Point realSize = Util.getRealSize(getWindowManager().getDefaultDisplay());
+		int width = realSize.x < realSize.y ? realSize.x : realSize.y;
+		int height = realSize.x > realSize.y ? realSize.x : realSize.y;
+		edit.putInt("maxWidth", width);
+		edit.putInt("maxHeight", height);
+		edit.commit();
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mFiltersDrawer = findViewById(R.id.filters_drawer);
