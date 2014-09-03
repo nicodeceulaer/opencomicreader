@@ -152,6 +152,11 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 		invalidate();
 	}// func
 
+	public void setEnlargeMode(boolean em) {
+		mImgTrans.setmEnlargeSmallerThanScreen(em);
+		invalidate();
+	}// func
+
 	public void setPanState(int i) {
 		mImgTrans.setPanSate(i);
 	}// func

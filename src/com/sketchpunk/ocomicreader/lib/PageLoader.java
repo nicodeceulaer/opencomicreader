@@ -1,5 +1,6 @@
 package com.sketchpunk.ocomicreader.lib;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
@@ -124,8 +125,8 @@ public class PageLoader {
 
 			try {
 				bmpOption.inJustDecodeBounds = true;
-				if (!this.isCancelled())
-					BitmapFactory.decodeStream(iStream, null, bmpOption);
+				BitmapFactory.decodeStream(iStream, null, bmpOption);
+				iStream = resetArchiveStream(archive, iStream);
 			} catch (Exception e) {
 				System.out.println("Error Getting Image Size " + e.getMessage());
 			}// try
@@ -137,14 +138,7 @@ public class PageLoader {
 
 			for (int i = 0; i < 4; i++) {
 				try {
-					// Rar stream can be reset which is better, but zip's can not, new stream must be created.
-					if (archive.isStreamResetable())
-						iStream.reset();
-					else {
-						iStream.close();
-						iStream = null;
-						iStream = archive.getItemInputStream(imagePath);
-					}// if
+					iStream = resetArchiveStream(archive, iStream);
 
 					bmpOption.inJustDecodeBounds = false;
 					bmpOption.inScaled = false;
@@ -238,6 +232,18 @@ public class PageLoader {
 
 			return bmp;
 		}// func
+
+		private InputStream resetArchiveStream(final iComicArchive archive, InputStream iStream) throws IOException {
+			// Rar stream can be reset which is better, but zip's can not, new stream must be created.
+			if (archive.isStreamResetable())
+				iStream.reset();
+			else {
+				iStream.close();
+				iStream = null;
+				iStream = archive.getItemInputStream(imagePath);
+			}// if
+			return iStream;
+		}
 
 		@Override
 		protected void onPostExecute(Bitmap bmp) {

@@ -1,11 +1,14 @@
 package sage.loader;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import sage.Util;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
@@ -65,7 +68,7 @@ public class LoadImageView {
 	// ************************************************************
 	// Load Image through thread
 	// ************************************************************
-	protected static class LoadingTask extends AsyncTask {
+	protected static class LoadingTask extends AsyncTask<String, Integer, Bitmap> {
 		private WeakReference<View> mImgView = null;
 		private WeakReference<OnImageLoadingListener> mOnImageLoading = null;
 		private WeakReference<OnImageLoadedListener> mOnImageLoaded = null;
@@ -84,9 +87,9 @@ public class LoadImageView {
 		}// func
 
 		@Override
-		protected Bitmap doInBackground(Object... params) {
+		protected Bitmap doInBackground(String... params) {
 			try {
-				imagePath = (String) params[0];
+				imagePath = params[0];
 
 				// .....................................
 				// If callback exists, then we need to load the image in a special sort of way.
@@ -105,34 +108,52 @@ public class LoadImageView {
 
 				BitmapFactory.Options bmpOption = new BitmapFactory.Options();
 
+				int viewWidth = 200;
+				int viewHeight = 200;
+
 				try {
 					bmpOption.inJustDecodeBounds = true;
 					BitmapFactory.decodeFile(imagePath, bmpOption);
 
 					if (mImgView != null && mImgView.get() != null) {
-						bmpOption.inSampleSize = Util.calculateInSampleSize(bmpOption, mImgView.get().getWidth(), mImgView.get().getHeight());
+						View imgView = mImgView.get();
+						if (imgView.getWidth() == 0 || imgView.getHeight() == 0) {
+							bmpOption.inSampleSize = 2;
+						} else {
+							viewWidth = bmpOption.outWidth < imgView.getWidth() ? bmpOption.outWidth : imgView.getWidth();
+							viewHeight = bmpOption.outHeight < imgView.getHeight() ? bmpOption.outHeight : imgView.getHeight();
+							bmpOption.inSampleSize = Util.calculateInSampleSize(bmpOption, viewWidth, viewHeight);
+						}
+						System.out.println("sample size for thumb:" + bmpOption.inSampleSize);
 					}
 				} catch (Exception e) {
 					System.out.println("Error Getting Image Size " + e.getMessage());
 				}// try
 
 				bmpOption.inJustDecodeBounds = false;
-				return BitmapFactory.decodeFile(imagePath, bmpOption);
+				int pan = (bmpOption.outWidth - viewWidth) / 2; // try to center image hoping to get relevant part of the image
+				WeakReference<Rect> imageRect = new WeakReference<Rect>(new Rect(pan, 0, viewWidth + pan, viewHeight));
+				// return BitmapFactory.decodeFile(imagePath, bmpOption);
+				return BitmapRegionDecoder.newInstance(new String(imagePath), true).decodeRegion(imageRect.get(), bmpOption);
 			} catch (OutOfMemoryError ex) {
 				Log.e("memory", "Coudln't load thumbnail file for " + imagePath + " due to OutOfMemoryError " + ex.getMessage());
+			} catch (IOException ex) {
+				Log.e("memory", "Coudln't load thumbnail file for " + imagePath + " due to IOexception " + ex.getMessage());
+			} catch (Exception ex) {
+				Log.e("memory", "Coudln't load thumbnail file for " + imagePath + " due to Other exception " + ex.getMessage());
 			}
 			return null;
 		}// func
 
 		@Override
-		protected void onPostExecute(Object bmp) {
+		protected void onPostExecute(Bitmap bmp) {
 			boolean isSuccess = false;
 
 			// --------------------------
 			// if the task has been cancelled, don't bother doing anything else.
 			if (this.isCancelled()) {
 				if (bmp != null) {
-					((Bitmap) bmp).recycle();
+					bmp.recycle();
 					bmp = null;
 				}
 
@@ -141,14 +162,14 @@ public class LoadImageView {
 			} else if (mImgView != null && bmp != null) {
 				final View view = mImgView.get();
 				if (view != null && view instanceof ImageView && bmp != null) {
-					((ImageView) view).setImageBitmap((Bitmap) bmp);
+					((ImageView) view).setImageBitmap(bmp);
 					isSuccess = true;
 				}// if
 
 				// --------------------------
 				// incase imageview doesn't exist anymore but bmp was loaded.
 			} else if (bmp != null) {
-				((Bitmap) bmp).recycle();
+				bmp.recycle();
 				bmp = null;
 			}// if
 
@@ -157,7 +178,7 @@ public class LoadImageView {
 			if (mOnImageLoaded != null) {
 				final OnImageLoadedListener callback = mOnImageLoaded.get();
 				if (callback != null)
-					callback.onImageLoaded(isSuccess, (Bitmap) bmp, mImgView.get());
+					callback.onImageLoaded(isSuccess, bmp, mImgView.get());
 			}// if
 		}// func
 	}// cls

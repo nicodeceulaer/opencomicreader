@@ -77,6 +77,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		mPref_openNextComicOnEnd = prefs.getBoolean("openNextComicOnEnd", true);
 
 		int scaleMode = Integer.parseInt(prefs.getString("scaleMode", "3"));
+		boolean enlargeSmallerThanScreen = prefs.getBoolean("enlargeSmallerThanScreen", false);
 
 		// Set activity features
 		int features = 0;
@@ -124,6 +125,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		// .........................................
 		mImageView = (GestureImageView) this.findViewById(R.id.pageView);
 		mImageView.setPanState((mPref_ReadRight) ? ImgTransform.INITPAN_LEFT : ImgTransform.INITPAN_RIGHT);
+		mImageView.setEnlargeMode(enlargeSmallerThanScreen);
 		mImageView.setScaleMode(scaleMode);
 		registerForContextMenu(mImageView);
 
