@@ -205,7 +205,7 @@ public class ComicLibrary {
 	/*
 	 * ======================================================== Manage Covers
 	 */
-	public static boolean createThumb(int coverHeight, int coverQuality, iComicArchive archive, String coverPath, String saveTo) {
+	public static boolean createThumb(int coverHeight, int coverWidth, int coverQuality, iComicArchive archive, String coverPath, String saveTo) {
 		boolean rtn = false;
 		InputStream iStream = archive.getItemInputStream(coverPath);
 
@@ -233,6 +233,9 @@ public class ComicLibrary {
 				// Save bitmap to file
 				File file = new File(saveTo);
 				FileOutputStream out = new FileOutputStream(file);
+				int pan = Math.max(0, (bmpOption.outWidth - coverWidth) / 2); // try to center image hoping to get relevant part of the image
+				int width = Math.min(coverWidth, bmpOption.outWidth);
+				bmp = Bitmap.createBitmap(bmp, pan, 0, width, bmpOption.outHeight);
 				bmp.compress(Bitmap.CompressFormat.JPEG, coverQuality, out);
 
 				// ....................................

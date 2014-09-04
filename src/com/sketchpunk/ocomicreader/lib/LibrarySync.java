@@ -33,7 +33,7 @@ public class LibrarySync implements Runnable {
 	private boolean mIncImgFlds = false; // When crawling for comic files, Include folders that have images in them.
 	private final boolean mSkipCrawl = false; // Skip finding new comics, just process the current library.
 	private boolean mUseFldForSeries = false; // User can choose to force series name from the parent folder name instead of using the series parser.
-	private final int mCoverHeight, mCoverQuality;
+	private final int mCoverHeight, mCoverWidth, mCoverQuality;
 	private RuntimeExceptionDao<Comic, Integer> comicDao = null;
 
 	public LibrarySync(Context context) {
@@ -48,6 +48,7 @@ public class LibrarySync implements Runnable {
 		mUseFldForSeries = prefs.getBoolean("syncFldForSeries", false);
 
 		mCoverHeight = prefs.getInt("syncCoverHeight", 300);
+		mCoverWidth = prefs.getInt("syncCoverWidth", 200);
 		mCoverQuality = prefs.getInt("syncCoverQuality", 70);
 
 	}// func
@@ -305,7 +306,7 @@ public class LibrarySync implements Runnable {
 					}// if
 
 					// Create ThumbNail
-					if (ComicLibrary.createThumb(mCoverHeight, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
+					if (ComicLibrary.createThumb(mCoverHeight, mCoverWidth, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
 						comic.setCoverExists(true);
 					}
 
