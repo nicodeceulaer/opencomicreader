@@ -71,7 +71,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 		// Get Preferences
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getContext());
 		try {
-			this.mGridColNum = prefs.getInt("libColCnt", 2);
+			this.mGridColNum = prefs.getInt("libColCnt", 4);
 			this.mGridPadding = prefs.getInt("libPadding", 0);
 			this.mThumbPadding = prefs.getInt("libCoverPad", 3);
 		} catch (Exception e) {

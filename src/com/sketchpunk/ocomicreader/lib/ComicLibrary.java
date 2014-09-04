@@ -33,6 +33,7 @@ public class ComicLibrary {
 	public final static int STATUS_NOSETTINGS = 1;
 	public final static int STATUS_COMPLETE = 0;
 	public final static String UKNOWN_SERIES = "-unknown-";
+	private static final String THUMB_PATH = "/RuneReader/thumbs/";
 
 	/*
 	 * ======================================================== Thread safe messaging
@@ -88,7 +89,7 @@ public class ComicLibrary {
 	public static String getThumbCachePath() {
 		// ........................................
 		// Make sure the cache folder exists.
-		String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/OpenComicReader/thumbs/";
+		String path = Environment.getExternalStorageDirectory().getAbsolutePath() + THUMB_PATH;
 		File file = new File(path);
 		if (!file.exists())
 			file.mkdirs();
@@ -129,7 +130,7 @@ public class ComicLibrary {
 
 		// Delete comic from library
 		if (comicDao.delete(comicToDelete) > 0) {
-			file = new File(String.format("%1$s/OpenComicReader/thumbs/%2$s.jpg", Environment.getExternalStorageDirectory().getAbsolutePath(), id));
+			file = new File(String.format("%1$s%2$s%2$s.jpg", Environment.getExternalStorageDirectory().getAbsolutePath(), THUMB_PATH, id));
 			if (file.exists())
 				file.delete();
 		}// if

@@ -18,7 +18,7 @@ public class ImgTransform {
 
 	private float mSrcWidth, mSrcHeight, mSrcScale, mViewWidth, mViewHeight, mOrgSrcScale;
 	private int mScaleMode = 0, mPanState = INITPAN_RIGHT;
-	private boolean mEnlargeSmallerThanScreen = false;
+	private boolean mEnlargeSmallerThanScreen = true;
 	private boolean mIsInit = false;
 	public Rect srcRect = new Rect(), viewRect = new Rect();
 

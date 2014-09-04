@@ -35,6 +35,7 @@ public class LibrarySync implements Runnable {
 	private boolean mUseFldForSeries = false; // User can choose to force series name from the parent folder name instead of using the series parser.
 	private final int mCoverHeight, mCoverWidth, mCoverQuality;
 	private RuntimeExceptionDao<Comic, Integer> comicDao = null;
+	private SeriesParser sParser = null;
 
 	public LibrarySync(Context context) {
 		mContext = context;
@@ -253,17 +254,13 @@ public class LibrarySync implements Runnable {
 	 * ======================================================== Process : Create Thumbs, GetPage Count, Remove not found file
 	 */
 	private void processLibrary() {
-		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
-		String[] comicMeta; // Title,Series,Volume,Issue
 		File file;
-		String comicPath, seriesName;
-		int seriesIssue;
+		String comicPath;
 		Integer comicID;
 		iComicArchive archive;
 
 		List<Comic> allComics = comicDao.queryForAll();
 		List<Comic> comicsToDelete = new ArrayList<Comic>();
-		SeriesParser sParser = null;
 
 		for (Comic comic : allComics) {
 			comicID = comic.getId();
@@ -286,79 +283,31 @@ public class LibrarySync implements Runnable {
 				continue;
 			}// if
 
-			// .........................................
-			// if thumb has not been generated.
-			if (!comic.isCoverExists()) {
-				sendProgress("Creating thumbnail for " + comicPath);
-				archive = ComicLoader.getArchiveInstance(comicPath);
-				if (archive == null) {
-					Log.e("archive", String.format("Archive %1$s couldn't be read. Possibly wrong format or broken file.", comicPath));
-					// TODO: if the file format is wrong, but file itself is alright maybe we could read correct format from file metadata?
-				} else {
-					archive.getLibraryData(comicInfo);
+			long opstart = System.nanoTime();
+			archive = ComicLoader.getArchiveInstance(comicPath);
+			long opend = System.nanoTime();
+			Log.d("speed", "Archive loaded in " + ((opend - opstart) / 1000000000.0));
+			if (archive == null) {
+				Log.e("archive", String.format("Archive %1$s couldn't be read. Possibly wrong format or broken file.", comicPath));
+				// TODO: if the file format is wrong, but file itself is alright maybe we could read correct format from file metadata?
+			}
 
-					comic.setPageCount(Integer.parseInt(comicInfo[0]));
+			opstart = System.nanoTime();
+			if (determinePageCount(comic, archive) == 0) {
+				comicsToDelete.add(comic);
+				opend = System.nanoTime();
+				Log.d("speed", "Pages counted in " + ((opend - opstart) / 1000000000.0));
+			} else {
+				opstart = System.nanoTime();
+				createThumbnail(comic, archive);
+				opend = System.nanoTime();
+				Log.d("speed", "Thumb created in " + ((opend - opstart) / 1000000000.0));
 
-					// No images in archive, then delete
-					if (comic.getPageCount() == 0) {
-						comicsToDelete.add(comic);
-						continue;
-					}// if
-
-					// Create ThumbNail
-					if (ComicLibrary.createThumb(mCoverHeight, mCoverWidth, mCoverQuality, archive, comicInfo[1], mCachePath + comicID + ".jpg")) {
-						comic.setCoverExists(true);
-					}
-
-					// Get Meta Information
-					comicMeta = archive.getMeta(); // Title,Series,Volume,Issue
-					if (comicMeta != null) {
-						if (!comicMeta[0].isEmpty()) {
-							comic.setTitle(comicMeta[0]);
-						}
-						if (!comicMeta[1].isEmpty()) {
-							comic.setSeries(comicMeta[1]);
-						}
-					}// if}
-
-					// Save information to the db.
-					comicDao.update(comic);
-					if (comicMeta != null && comicMeta[1] != "")
-						continue; // Since series was updated from meta, Don't continue the rest of the loop which handles the series
-				}
-			}// if
-
-			// .........................................
-			// if series does not exist, create a series name.
-			seriesName = comic.getSeries();
-			seriesIssue = 0;
-			if (seriesName == null || seriesName.isEmpty() || seriesName.compareToIgnoreCase(ComicLibrary.UKNOWN_SERIES) == 0) {
-				if (mUseFldForSeries)
-					seriesName = Path.getParentName(comicPath);
-				else {
-					if (sParser == null)
-						sParser = new SeriesParser(); // JIT
-					seriesName = sParser.getSeriesName(comicPath.replaceAll("'", ""));
-
-					// if seriesName ends up being the path, use the parent folder as the series name.
-					if (seriesName.contains("/")) {
-						seriesName = sParser.getSeriesName(comicPath.replaceAll("'", "") + ".xxx"); // Parsers rely on 3 char extension being there.
-						if (seriesName.contains("/")) {
-							seriesName = Path.getParentName(comicPath);
-						} else {
-							seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", "") + ".xxx");
-						}
-					} else {
-						seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", ""));
-					}
-				}// if
-
-				if (!seriesName.isEmpty()) {
-					comic.setSeries(seriesName);
-					comic.setIssue(seriesIssue);
-					comicDao.update(comic);
-				}
-			}// if
+				opstart = System.nanoTime();
+				generateSeriesData(comic, archive);
+				opend = System.nanoTime();
+				Log.d("speed", "Series determined in " + ((opend - opstart) / 1000000000.0));
+			}
 		}// for
 
 		// .........................................
@@ -368,5 +317,98 @@ public class LibrarySync implements Runnable {
 			comicDao.delete(comicsToDelete);
 		}// if
 	}// func
+
+	private void createThumbnail(Comic comic, iComicArchive archive) {
+		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
+		archive.getLibraryData(comicInfo);
+
+		if (ComicLibrary.createThumb(mCoverHeight, mCoverWidth, mCoverQuality, archive, comicInfo[1], mCachePath + comic.getId() + ".jpg")) {
+			comic.setCoverExists(true);
+		}
+	}
+
+	private int determinePageCount(Comic comic, iComicArchive archive) {
+		String comicPath = comic.getPath();
+		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
+
+		sendProgress("Creating thumbnail for " + comicPath);
+		archive.getLibraryData(comicInfo);
+
+		comic.setPageCount(Integer.parseInt(comicInfo[0]));
+
+		return comic.getPageCount();
+	}
+
+	private void generateSeriesData(Comic comic, iComicArchive archive) {
+		if (comic.getSeries() == null || comic.getSeries().equals(ComicLibrary.UKNOWN_SERIES)) {
+			if (getSeriesDataFromMeta(comic, archive)) {
+				return;
+			}
+			getSeriesDataFromPath(comic);
+		}
+	}
+
+	private void getSeriesDataFromPath(Comic comic) {
+		String comicPath = comic.getPath();
+		String seriesName = comic.getSeries();
+		int seriesIssue = 0;
+		if (seriesName == null || seriesName.isEmpty() || seriesName.compareToIgnoreCase(ComicLibrary.UKNOWN_SERIES) == 0) {
+			if (mUseFldForSeries)
+				seriesName = Path.getParentName(comicPath);
+			else {
+				if (sParser == null) {
+					sParser = new SeriesParser(); // JIT
+				}
+				seriesName = sParser.getSeriesName(comicPath.replaceAll("'", ""));
+
+				// if seriesName ends up being the path, use the parent folder as the series name.
+				if (seriesName.contains("/")) {
+					seriesName = sParser.getSeriesName(comicPath.replaceAll("'", "") + ".xxx"); // Parsers rely on 3 char extension being there.
+					if (seriesName.contains("/")) {
+						seriesName = Path.getParentName(comicPath);
+					} else {
+						seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", "") + ".xxx");
+					}
+				} else {
+					seriesIssue = sParser.getSeriesIssue(comicPath.replaceAll("'", ""));
+				}
+			}// if
+
+			if (!seriesName.isEmpty()) {
+				comic.setSeries(seriesName);
+				comic.setIssue(seriesIssue);
+				comicDao.update(comic);
+			}
+		}// if
+	}
+
+	private boolean getSeriesDataFromMeta(Comic comic, iComicArchive archive) {
+		String[] comicMeta; // Title,Series,Volume,Issue
+		comicMeta = archive.getMeta(); // Title,Series,Volume,Issue
+		boolean comicChanged = false;
+		if (comicMeta != null) {
+			if (!comicMeta[0].isEmpty()) {
+				comic.setTitle(comicMeta[0]);
+				comicChanged = true;
+			}
+			if (!comicMeta[1].isEmpty()) {
+				comic.setSeries(comicMeta[1]);
+				comicChanged = true;
+			}
+			if (!comicMeta[3].isEmpty()) {
+				comic.setIssue(Integer.parseInt(comicMeta[3]));
+				comicChanged = true;
+			} else if (!comicMeta[2].isEmpty()) {
+				comic.setIssue(Integer.parseInt(comicMeta[2]));
+				comicChanged = true;
+			}
+		}// if}
+
+		// Save information to the db.
+		if (comicChanged) {
+			comicDao.update(comic);
+		}
+		return comicChanged;
+	}
 
 }// cls

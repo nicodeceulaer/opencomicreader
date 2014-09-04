@@ -27,7 +27,7 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 	private final Context context;
 	private final int layoutResourceId;
 	private final List<Comic> data;
-	private int mThumbHeight = 600;
+	private int mThumbHeight = 300;
 
 	public ComicGridAdapter(Context context, int layoutResourceId, List<Comic> data) {
 		super(context, layoutResourceId, data);
@@ -37,7 +37,7 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getContext());
 		try {
-			this.mThumbHeight = prefs.getInt("libCoverHeight", 800);
+			this.mThumbHeight = prefs.getInt("libCoverHeight", 300);
 		} catch (Exception e) {
 			Log.e("prefs", "Error loading Library prefs");
 		}
