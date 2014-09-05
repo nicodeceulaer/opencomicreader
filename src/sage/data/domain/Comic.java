@@ -21,9 +21,6 @@ public class Comic implements Serializable {
 	private String path;
 
 	@DatabaseField
-	private boolean coverExists;
-
-	@DatabaseField
 	private int pageCount;
 
 	@DatabaseField
@@ -67,14 +64,6 @@ public class Comic implements Serializable {
 
 	public void setPath(String path) {
 		this.path = path;
-	}
-
-	public boolean isCoverExists() {
-		return coverExists;
-	}
-
-	public void setCoverExists(boolean coverExists) {
-		this.coverExists = coverExists;
 	}
 
 	public int getPageCount() {

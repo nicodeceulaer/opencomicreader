@@ -44,27 +44,13 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
 		try {
 			if (mSeriesFilterMode == 1 && mSeriesFilter.isEmpty()) {// Filter by series
-				GenericRawResults<String[]> rawResults = comicDao.queryRaw(getSeriesSearchString(1));
+				GenericRawResults<String[]> rawResults = comicDao.queryRaw(getSeriesSearchString());
 				data = new ArrayList<Comic>();
 				for (String[] resultArray : rawResults) {
 					Comic seriesResult = parseRawComicSeriesResults(resultArray);
 					data.add(seriesResult);
 				}
-				GenericRawResults<String[]> rawResultsWithoutCovers = comicDao.queryRaw(getSeriesSearchString(0));
 
-				for (String[] resultArray : rawResultsWithoutCovers) {
-					Comic seriesResult = parseRawComicSeriesResults(resultArray);
-					boolean alreadyFound = false;
-					for (Comic comic : data) {
-						if (comic.getSeries() != null && comic.getSeries().equals(seriesResult.getSeries())) {
-							alreadyFound = true;
-							break;
-						}
-					}
-					if (alreadyFound == false) {
-						data.add(seriesResult);
-					}
-				}
 				return data;
 			} else { // Filter by reading progress.
 				if (mSeriesFilterMode == 1) { // series selected
@@ -110,32 +96,24 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 		return data;
 	}
 
-	//@formatter:off
-	private String getSeriesSearchString(int coverExists) {
-		return "SELECT min(id)[id], " +
-				"series[title], " +
-				"sum(pageCount)[pageCount], " +
-				"coverExists, " +
-				"sum(pageRead)[pageRead], " +
-				"count(id) [issue] " +
-				"FROM comics " +
-				"WHERE coverExists = " + coverExists + " " +
-				getReadFilterStringForSeries() +
-				"GROUP BY LOWER(series) " +
-				"ORDER BY LOWER(series)";
+	// @formatter:off
+	private String getSeriesSearchString() {
+		return "SELECT min(id)[id], " + "series[title], " + "sum(pageCount)[pageCount], " + "sum(pageRead)[pageRead], " + "count(id) [issue] " + "FROM comics "
+				+ getReadFilterStringForSeries() + "GROUP BY LOWER(series) " + "ORDER BY LOWER(series)";
 	}
-	//@formatter:on
+
+	// @formatter:on
 
 	private String getReadFilterStringForSeries() {
 		switch (mReadFilterMode) {
 		default:
 			return "";
 		case 1:
-			return "AND pageRead = 0 ";
+			return "WHERE pageRead = 0 ";
 		case 2:
-			return "AND pageRead > 0 AND pageRead < pageCount - 1 ";
+			return "WHERE pageRead > 0 AND pageRead < pageCount - 1 ";
 		case 3:
-			return "AND pageRead >= pageCount - 1 ";
+			return "WHERE pageRead >= pageCount - 1 ";
 		}// switch
 	}
 
@@ -145,9 +123,8 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 		seriesResult.setTitle(resultArray[1]);
 		seriesResult.setSeries(resultArray[1]);
 		seriesResult.setPageCount(Integer.parseInt(resultArray[2]));
-		seriesResult.setCoverExists(resultArray[3].equals("1") ? true : false);
-		seriesResult.setPageRead(Integer.parseInt(resultArray[4]));
-		seriesResult.setIssue(Integer.parseInt(resultArray[5]));
+		seriesResult.setPageRead(Integer.parseInt(resultArray[3]));
+		seriesResult.setIssue(Integer.parseInt(resultArray[4]));
 		return seriesResult;
 	}
 

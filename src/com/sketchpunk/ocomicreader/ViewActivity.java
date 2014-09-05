@@ -77,7 +77,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		mPref_openNextComicOnEnd = prefs.getBoolean("openNextComicOnEnd", true);
 
 		int scaleMode = Integer.parseInt(prefs.getString("scaleMode", "3"));
-		boolean enlargeSmallerThanScreen = prefs.getBoolean("enlargeSmallerThanScreen", false);
+		boolean enlargeSmallerThanScreen = prefs.getBoolean("enlargeSmallerThanScreen", true);
 
 		// Set activity features
 		int features = 0;

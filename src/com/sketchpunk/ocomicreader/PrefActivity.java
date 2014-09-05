@@ -94,7 +94,7 @@ public class PrefActivity extends PreferenceActivity implements Preference.OnPre
 					new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int id) {
-							ComicLibrary.clearCovers(context);
+							ComicLibrary.clearCovers();
 						}
 					});
 		}// if

@@ -179,18 +179,8 @@ public class ComicLibrary {
 	}// func
 
 	public static boolean clearAll(Context context) {
-		// ................................................
-		// Delete thumbnails
-		String cachePath = getThumbCachePath();
+		clearCovers();
 
-		File fObj = new File(cachePath);
-		File[] fList = fObj.listFiles(new ThumbFindFilter());
-		if (fList != null) {
-			for (File file : fList)
-				file.delete();
-		}// if
-
-		// ................................................
 		getComicDao(context);
 
 		try {
@@ -264,7 +254,7 @@ public class ComicLibrary {
 		return rtn;
 	}// func
 
-	public static void clearCovers(Context context) {
+	public static void clearCovers() {
 		// ................................................
 		// Delete thumbnails
 		String cachePath = getThumbCachePath();
@@ -276,18 +266,6 @@ public class ComicLibrary {
 				file.delete();
 		}// if
 
-		// ................................................
-		getComicDao(context);
-
-		UpdateBuilder<Comic, Integer> comicUpdate = comicDao.updateBuilder();
-		try {
-			comicUpdate.updateColumnValue("coverExists", 0);
-			comicUpdate.update();
-		} catch (SQLException e) {
-			Log.e("sql", e.getLocalizedMessage());
-		}
-
-		OpenHelperManager.releaseHelper();
 	}// func
 
 	/*

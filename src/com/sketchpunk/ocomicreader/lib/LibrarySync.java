@@ -11,6 +11,7 @@ import sage.data.domain.Comic;
 import sage.io.Path;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.MergeCursor;
@@ -23,6 +24,8 @@ import android.util.Log;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.misc.TransactionManager;
+import com.runeai.runereader.R;
+import com.sketchpunk.ocomicreader.ThumbnailService;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary.ComicFindFilter;
 
 public class LibrarySync implements Runnable {
@@ -33,7 +36,6 @@ public class LibrarySync implements Runnable {
 	private boolean mIncImgFlds = false; // When crawling for comic files, Include folders that have images in them.
 	private final boolean mSkipCrawl = false; // Skip finding new comics, just process the current library.
 	private boolean mUseFldForSeries = false; // User can choose to force series name from the parent folder name instead of using the series parser.
-	private final int mCoverHeight, mCoverWidth, mCoverQuality;
 	private RuntimeExceptionDao<Comic, Integer> comicDao = null;
 	private SeriesParser sParser = null;
 
@@ -47,10 +49,6 @@ public class LibrarySync implements Runnable {
 		mSyncFld2 = prefs.getString("syncfolder2", "");
 		mIncImgFlds = prefs.getBoolean("syncImgFlds", false);
 		mUseFldForSeries = prefs.getBoolean("syncFldForSeries", false);
-
-		mCoverHeight = prefs.getInt("syncCoverHeight", 300);
-		mCoverWidth = prefs.getInt("syncCoverWidth", 200);
-		mCoverQuality = prefs.getInt("syncCoverQuality", 70);
 
 	}// func
 
@@ -254,6 +252,7 @@ public class LibrarySync implements Runnable {
 	 * ======================================================== Process : Create Thumbs, GetPage Count, Remove not found file
 	 */
 	private void processLibrary() {
+		long longopstart = System.nanoTime();
 		File file;
 		String comicPath;
 		Integer comicID;
@@ -270,77 +269,92 @@ public class LibrarySync implements Runnable {
 			// .........................................
 			// if file does not exist, remove from library.
 			if (!file.exists()) {
-				sendProgress("Removing reference to " + comic.getTitle());
+				sendProgress(mContext.getString(R.string.deleting_comic) + comic.getTitle() + " " + comic.getIssue());
 				comicsToDelete.add(comic);
-
-				try { // delete thumbnail if available
-					file = new File(mCachePath + comicID + ".jpg");
-					if (file.exists())
-						file.delete();
-				} catch (Exception e) {
-				}
 
 				continue;
 			}// if
 
-			long opstart = System.nanoTime();
-			archive = ComicLoader.getArchiveInstance(comicPath);
-			long opend = System.nanoTime();
-			Log.d("speed", "Archive loaded in " + ((opend - opstart) / 1000000000.0));
-			if (archive == null) {
-				Log.e("archive", String.format("Archive %1$s couldn't be read. Possibly wrong format or broken file.", comicPath));
-				// TODO: if the file format is wrong, but file itself is alright maybe we could read correct format from file metadata?
+			if (!coverExists(comic)) {
+				createThumbnailInBackground(comicPath, comic.getId());
 			}
 
-			opstart = System.nanoTime();
-			if (determinePageCount(comic, archive) == 0) {
-				comicsToDelete.add(comic);
-				opend = System.nanoTime();
-				Log.d("speed", "Pages counted in " + ((opend - opstart) / 1000000000.0));
-			} else {
-				opstart = System.nanoTime();
-				createThumbnail(comic, archive);
-				opend = System.nanoTime();
-				Log.d("speed", "Thumb created in " + ((opend - opstart) / 1000000000.0));
+			if (isLackingData(comic)) {
+				archive = ComicLoader.getArchiveInstance(comicPath);
+				if (archive == null) {
+					Log.e("archive", String.format("Archive %1$s couldn't be read. Possibly wrong format or broken file.", comicPath));
+					// TODO: if the file format is wrong, but file itself is alright maybe we could read correct format from file metadata?
+				}
 
-				opstart = System.nanoTime();
-				generateSeriesData(comic, archive);
-				opend = System.nanoTime();
-				Log.d("speed", "Series determined in " + ((opend - opstart) / 1000000000.0));
+				if (determinePageCount(comic, archive) == 0) {
+					comicsToDelete.add(comic);
+				} else {
+					generateSeriesData(comic, archive);
+				}
 			}
 		}// for
 
 		// .........................................
 		// if there is a list of items to delete, do it now in one swoop.
 		if (comicsToDelete.size() > 0) {
-			sendProgress("Cleaning up library...");
+			sendProgress(mContext.getString(R.string.cleaning_library));
+			for (Comic comicToDelete : comicsToDelete) {
+				deleteThumbnail(comicToDelete);
+			}
 			comicDao.delete(comicsToDelete);
 		}// if
+
+		long longopend = System.nanoTime();
+		Log.d("speed", "Library processed in " + ((longopend - longopstart) / 1000000000.0));
 	}// func
 
-	private void createThumbnail(Comic comic, iComicArchive archive) {
-		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
-		archive.getLibraryData(comicInfo);
+	private boolean isLackingData(Comic comic) {
+		return isSeriesLacking(comic) || isPagesZero(comic);
+	}
 
-		if (ComicLibrary.createThumb(mCoverHeight, mCoverWidth, mCoverQuality, archive, comicInfo[1], mCachePath + comic.getId() + ".jpg")) {
-			comic.setCoverExists(true);
+	private boolean isPagesZero(Comic comic) {
+		return comic.getPageCount() == 0;
+	}
+
+	private boolean isSeriesLacking(Comic comic) {
+		return comic.getSeries() == null || comic.getSeries().equals(ComicLibrary.UKNOWN_SERIES) || comic.getSeries().equals("");
+	}
+
+	private void deleteThumbnail(Comic comicToDelete) {
+		File file = new File(mCachePath + comicToDelete.getId() + ".jpg");
+		if (file.exists() && !file.isDirectory()) {
+			file.delete();
 		}
 	}
 
+	private boolean coverExists(Comic comic) {
+		File file = new File(mCachePath + comic.getId() + ".jpg");
+		return file.exists();
+	}
+
+	private void createThumbnailInBackground(String comicPath, int comicId) {
+		Intent mServiceIntent = new Intent(mContext, ThumbnailService.class);
+		mServiceIntent.putExtra("comicPath", comicPath);
+		mServiceIntent.putExtra("comicId", comicId);
+		((Activity) mContext).startService(mServiceIntent);
+	}
+
 	private int determinePageCount(Comic comic, iComicArchive archive) {
-		String comicPath = comic.getPath();
-		String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
+		if (isPagesZero(comic)) {
+			String comicPath = comic.getPath();
+			String[] comicInfo = { "", "", "" };// Page Count,Path to Cover Entry,Path to Meta Data
 
-		sendProgress("Creating thumbnail for " + comicPath);
-		archive.getLibraryData(comicInfo);
+			sendProgress(mContext.getString(R.string.analyzing_comic) + comicPath);
+			archive.getLibraryData(comicInfo);
 
-		comic.setPageCount(Integer.parseInt(comicInfo[0]));
+			comic.setPageCount(Integer.parseInt(comicInfo[0]));
+		}
 
 		return comic.getPageCount();
 	}
 
 	private void generateSeriesData(Comic comic, iComicArchive archive) {
-		if (comic.getSeries() == null || comic.getSeries().equals(ComicLibrary.UKNOWN_SERIES)) {
+		if (isSeriesLacking(comic)) {
 			if (getSeriesDataFromMeta(comic, archive)) {
 				return;
 			}

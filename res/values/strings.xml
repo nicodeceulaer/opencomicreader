@@ -18,6 +18,9 @@
     <string name="read_something_first">Read something first</string>
     <string name="set_library_folders_first">Set library folders in settings before syncing</string>
     <string name="library_syncing">Library Syncing</string>
+    <string name="cleaning_library">Library Syncing</string>
+    <string name="analyzing_comic">Analyzing comic </string>
+    <string name="deleting_comic">Deleting comic </string>
     <string name="library_syncing_failed_to_start">Sync did not start</string>
     <string name="error_closing_progress_dialog">Error closing progress dialog</string>
     <string name="other">Other</string>

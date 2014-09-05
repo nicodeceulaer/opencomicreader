@@ -315,7 +315,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	 */
 	@Override
 	public void onPause() {
-		mGridView.clearData();
+		// mGridView.clearData();
 		super.onPause();
 	}// func
 
