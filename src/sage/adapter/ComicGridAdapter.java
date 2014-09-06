@@ -64,20 +64,22 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 		}
 
 		Comic comic = data.get(position);
+		if (holder.id == null || holder.id != comic.getId() || holder.bitmap == null || holder.bitmap.get() == null) {
 
-		holder.imageCover.setImageBitmap(null);
-		File file = new File(ComicLibrary.getThumbCachePath() + comic.getId() + ".jpg");
-		if (file.exists()) {
-			LoadImageView.loadImage(file.getPath(), holder.imageCover, context);
+			holder.imageCover.setImageBitmap(null);
+			File file = new File(ComicLibrary.getThumbCachePath() + comic.getId() + ".jpg");
+			if (file.exists()) {
+				LoadImageView.loadImage(file.getPath(), holder.imageCover, context);
+			}
+
+			holder.libraryTitle.setText(comic.getTitle());
+			holder.issueNumber.setText(Integer.toString(comic.getIssue()));
+			holder.readingProgress.setProgress((float) (comic.getPageRead() < comic.getPageCount() - 1 ? comic.getPageRead() : comic.getPageCount())
+					/ (float) comic.getPageCount());
+
+			holder.id = comic.getId();
+			holder.seriesName = comic.getSeries();
 		}
-
-		holder.libraryTitle.setText(comic.getTitle());
-		holder.issueNumber.setText(Integer.toString(comic.getIssue()));
-		holder.readingProgress.setProgress((float) (comic.getPageRead() < comic.getPageCount() - 1 ? comic.getPageRead() : comic.getPageCount())
-				/ (float) comic.getPageCount());
-
-		holder.id = comic.getId();
-		holder.seriesName = comic.getSeries();
 
 		return convertView;
 	}

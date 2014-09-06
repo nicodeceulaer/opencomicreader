@@ -315,19 +315,25 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	 */
 	@Override
 	public void onPause() {
-		// mGridView.clearData();
 		super.onPause();
 	}// func
 
 	@Override
 	protected void onStop() {
+		mGridView.nullAdapter();
 		super.onStop();
 	};
 
 	@Override
+	protected void onRestart() {
+		mGridView.recoverAdapter();
+		super.onRestart();
+	}
+
+	@Override
 	public void onResume() {
+		mGridView.scrollToLastPosition();
 		super.onResume();
-		mGridView.refreshData();
 	}// func
 
 	/*

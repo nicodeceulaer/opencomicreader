@@ -54,6 +54,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	private int mThumbPadding = 0;
 	private int mGridPadding = 0;
 	private int mGridColNum = 2;
+	private int mCoverHeight = 0;
 
 	public CoverGridView(Context context) {
 		super(context);
@@ -74,6 +75,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 			this.mGridColNum = prefs.getInt("libColCnt", 4);
 			this.mGridPadding = prefs.getInt("libPadding", 0);
 			this.mThumbPadding = prefs.getInt("libCoverPad", 3);
+			this.mCoverHeight = prefs.getInt("syncCoverHeight", 300);
 		} catch (Exception e) {
 			System.err.println("Error Loading Library Prefs " + e.getMessage());
 		}// try
@@ -105,6 +107,24 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	private void getComicDao() {
 		DatabaseHelper databaseHelper = OpenHelperManager.getHelper(this.getContext(), DatabaseHelper.class);
 		comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
+	}
+
+	int lastComicPosition = 0;
+
+	/*
+	 * This assures that children of this view and data in the recycler will be released. When used onStop releases tons of memory.
+	 */
+	public void nullAdapter() {
+		lastComicPosition = this.getFirstVisiblePosition();
+		this.setAdapter(null);
+	}
+
+	public void recoverAdapter() {
+		this.setAdapter(mAdapter);
+	}
+
+	public void scrollToLastPosition() {
+		setSelection(lastComicPosition);
 	}
 
 	public void dispose() {
