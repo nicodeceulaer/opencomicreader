@@ -191,7 +191,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		getMenuInflater().inflate(R.menu.activity_view, menu);
-		menu.setHeaderTitle("Options");
+		menu.setHeaderTitle(R.string.options);
 
 		menu.findItem(R.id.mnu_readright).setChecked(mPref_ReadRight);
 

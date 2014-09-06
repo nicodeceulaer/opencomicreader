@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rune Reader</string>
+    <string name="yes">Tak</string>
+    <string name="no">Nie</string>
+    <string name="back_to_library">Wróć do biblioteki</string>
+    <string name="go_to_page">Idź do strony</string>
+    <string name="scale">Skalowanie</string>
+    <string name="scale_auto">Automatyczne</string>
+    <string name="scale_off">Brak</string>
+    <string name="scale_height">Dostosuj do wysokości</string>
+    <string name="scale_width">Dostosuj do szerokości</string>
+    <string name="orientation">Orientacja</string>
+    <string name="orientation_device">Użyj ustawień urządzenia</string>
+    <string name="orientation_portrait">Zawsze pionowo</string>
+    <string name="orientation_landscape">Zawsze poziomo</string>
+    <string name="read_left_to_right">Czytaj od lewej do prawej</string>
+    <string name="immersive_mode">Tryb immersywny</string>
+    <string name="options">Opcje</string>
+    <string name="menu_settings">Ustawienia</string>
+    <string name="settings">Ustawienia</string>
+    <string name="about">O programie</string>
+    <string name="sync">Skanuj bibliotekę</string>
+    <string name="action_last">Ostatni</string>
+    <string name="drawer_open">Otwórz szufladę</string>
+    <string name="drawer_close">Zamknij szufladę</string>
+    <string name="series_filter_title">Filtruj po serii</string>
+    <string name="read_filter_title">Filtruj po statusie</string>
+    <string name="press_again_to_exit">Wciśnij wstecz ponownie by opuścić program</string>
+    <string name="sync_library_popup_title">Skanowanie biblioteki</string>
+    <string name="sync_library_popup_message">Rozpocząć skanowanie?</string>
+    <string name="read_something_first">Najpierw coś przeczytaj</string>
+    <string name="set_library_folders_first">Foldery biblioteki można ustawić w ustawieniach</string>
+    <string name="library_syncing">Skanowanie biblioteki</string>
+    <string name="cleaning_library">Oczyszczanie biblioteki</string>
+    <string name="analyzing_comic">Analiza komiksu </string>
+    <string name="deleting_comic">Usuwanie komiksu </string>
+    <string name="library_syncing_failed_to_start">Synchronizacja nie została rozpoczęta</string>
+    <string name="error_closing_progress_dialog">Nieudane zamknięcie okna postępu</string>
+    <string name="other">Inne</string>
+    <string name="app_about">Strona domowa : https://github.com/rlach/opencomicreader \n\n
+        Deweloperzy\n -
+        Areinu\n 
+        VoR \n\n
+        Kontrybutorzy\n
+        - SpeedProd\n
+        - afterlifesol\n
+        - AKiniyalocts\n
+        - maximeh\n
+        - cedricje
+    </string>
+
+    <string-array name="scaleMode">
+        <item>Brak</item>
+        <item>Dostosuj do wysokości</item>
+        <item>Dostosuj do szerokości</item>
+        <item>Automatyczne</item>>
+    </string-array>
+    <string-array name="scaleMode_v">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="screenOrientation">
+        <item>Użyj ustawień urządzenia</item>
+        <item>Zawsze pionowo</item>
+        <item>Zawsze poziomo</item>
+    </string-array>
+    <string-array name="screenOrientation_v">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="seriesFilter">
+        <item>Wszystkio</item>
+        <item>Serie</item>
+        <item>Ostatnio czytane</item>
+    </string-array>
+    <string-array name="other">
+        <item>Skanowanie</item>
+        <item>Ustawienia</item>
+        <item>O programie</item>
+    </string-array>
+    <string-array name="readFilter">
+        <item>Wszystkie</item>
+        <item>Nieprzeczytane</item>
+        <item>Czytane</item>
+        <item>Przeczytane</item>
+    </string-array>
+</resources>

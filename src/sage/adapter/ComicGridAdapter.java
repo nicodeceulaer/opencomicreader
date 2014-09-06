@@ -73,7 +73,8 @@ public class ComicGridAdapter extends ArrayAdapter<Comic> implements LoadImageVi
 
 		holder.libraryTitle.setText(comic.getTitle());
 		holder.issueNumber.setText(Integer.toString(comic.getIssue()));
-		holder.readingProgress.setProgress((float) comic.getPageRead() / (float) comic.getPageCount());
+		holder.readingProgress.setProgress((float) (comic.getPageRead() < comic.getPageCount() - 1 ? comic.getPageRead() : comic.getPageCount())
+				/ (float) comic.getPageCount());
 
 		holder.id = comic.getId();
 		holder.seriesName = comic.getSeries();

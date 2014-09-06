@@ -1,25 +1,25 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/mnu_exit" android:title="Back to Library" android:orderInCategory="100" android:showAsAction="never"/>
-    <item android:id="@+id/mnu_goto" android:title="Go to Page" android:orderInCategory="100" android:showAsAction="never"/>
-    <item android:id="@+id/mnu_scale" android:title="Scale" android:orderInCategory="100" android:showAsAction="never">
+    <item android:id="@+id/mnu_exit" android:title="@string/back_to_library" android:orderInCategory="100" android:showAsAction="never"/>
+    <item android:id="@+id/mnu_goto" android:title="@string/go_to_page" android:orderInCategory="100" android:showAsAction="never"/>
+    <item android:id="@+id/mnu_scale" android:title="@string/scale" android:orderInCategory="100" android:showAsAction="never">
         <menu>
             <group android:checkableBehavior="single">
-            	<item android:id="@+id/mnu_scalen" android:title="Off" android:checkable="true"/>
-            	<item android:id="@+id/mnu_scalea" android:title="Auto" android:checkable="true"/>
-            	<item android:id="@+id/mnu_scaleh" android:title="Screen Height" android:checkable="true"/>
-            	<item android:id="@+id/mnu_scalew" android:title="Screen Width" android:checkable="true"/>
+            	<item android:id="@+id/mnu_scalen" android:title="@string/scale_off" android:checkable="true"/>
+            	<item android:id="@+id/mnu_scalea" android:title="@string/scale_auto" android:checkable="true"/>
+            	<item android:id="@+id/mnu_scaleh" android:title="@string/scale_height" android:checkable="true"/>
+            	<item android:id="@+id/mnu_scalew" android:title="@string/scale_width" android:checkable="true"/>
             </group>
         </menu>
 	</item>
-	<item android:id="@+id/mnu_orientation" android:title="Orientation" android:orderInCategory="100" android:showAsAction="never">
+	<item android:id="@+id/mnu_orientation" android:title="@string/orientation" android:orderInCategory="100" android:showAsAction="never">
         <menu>
             <group android:checkableBehavior="single">
-                <item android:id="@+id/mnu_orientationd" android:title="Use device settings" android:checkable="true"/>
-                <item android:id="@+id/mnu_orientationp" android:title="Lock to portrait" android:checkable="true"/>
-                <item android:id="@+id/mnu_orientationl" android:title="Lock to landscape" android:checkable="true"/>
+                <item android:id="@+id/mnu_orientationd" android:title="@string/orientation_device" android:checkable="true"/>
+                <item android:id="@+id/mnu_orientationp" android:title="@string/orientation_portrait" android:checkable="true"/>
+                <item android:id="@+id/mnu_orientationl" android:title="@string/orientation_landscape" android:checkable="true"/>
             </group>
         </menu>
 	</item>
-	<item android:id="@+id/mnu_readright" android:title="Read Left to Right" android:orderInCategory="100" android:checkable="true"/>
-	<item android:id="@+id/mnu_immersive" android:title="Turn on Immersive Mode" android:orderInCategory="100" android:showAsAction="never"/>
+	<item android:id="@+id/mnu_readright" android:title="@string/read_left_to_right" android:orderInCategory="100" android:checkable="true"/>
+	<item android:id="@+id/mnu_immersive" android:title="@string/immersive_mode" android:orderInCategory="100" android:showAsAction="never"/>
 </menu>

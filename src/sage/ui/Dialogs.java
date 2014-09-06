@@ -28,8 +28,8 @@ public class Dialogs {
 	}// func
 
 	public static void ConfirmBox(Context context, String title, String msg, DialogInterface.OnClickListener onOk) {
-		AlertDialog.Builder abBuilder = new AlertDialog.Builder(context).setTitle(title).setMessage(msg).setNegativeButton("No", null)
-				.setPositiveButton("Yes", onOk).setCancelable(false);
+		AlertDialog.Builder abBuilder = new AlertDialog.Builder(context).setTitle(title).setMessage(msg).setNegativeButton(R.string.no, null)
+				.setPositiveButton(R.string.yes, onOk).setCancelable(false);
 		abBuilder.show();
 	}// func
 
