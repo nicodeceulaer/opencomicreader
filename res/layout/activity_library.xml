@@ -4,27 +4,11 @@
     android:layout_height="match_parent" >
 
     <RelativeLayout
-        android:id="@+id/MainLayout"
+        android:id="@+id/library_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="@color/library_background" >
-
-        <com.sketchpunk.ocomicreader.ui.CoverGridView
-            android:id="@+id/lvMain"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:clipToPadding="false"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:drawSelectorOnTop="true"
-            android:gravity="center"
-            android:listSelector="@drawable/item_selected"
-            android:numColumns="2"
-            android:scrollbarStyle="insideOverlay"
-            android:stretchMode="columnWidth" >
-            <requestFocus />
-        </com.sketchpunk.ocomicreader.ui.CoverGridView>
     </RelativeLayout>
 
     <LinearLayout

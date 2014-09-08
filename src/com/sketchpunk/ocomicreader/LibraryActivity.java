@@ -10,6 +10,9 @@ import sage.Util;
 import sage.adapter.LibraryDrawerAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
+import android.app.ActionBar;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,8 +27,6 @@ import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,6 +39,8 @@ import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.runeai.runereader.R;
+import com.sketchpunk.ocomicreader.fragments.ComicGridFragment;
+import com.sketchpunk.ocomicreader.fragments.WelcomeFragment;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
@@ -45,7 +48,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	private static final int SERIES_GROUP = 0;
 	private static final int READING_GROUP = 1;
-	private CoverGridView mGridView;
 	private ProgressDialog mProgress;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
 	private DrawerLayout mDrawerLayout;
@@ -56,16 +58,11 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	private SharedPreferences prefs;
 	private long backPressed;
 	DrawerChildClickListener drawerChildClickListener;
+	ComicGridFragment comicGridFragment = null;
 
 	/*
 	 * ======================================================== Main
 	 */
-	@Override
-	public void onDestroy() {
-		mGridView.dispose();
-		super.onDestroy();
-	}// func
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -75,20 +72,12 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-		Editor edit = prefs.edit();
-		Point realSize = Util.getRealSize(getWindowManager().getDefaultDisplay());
-		int width = realSize.x < realSize.y ? realSize.x : realSize.y;
-		int height = realSize.x > realSize.y ? realSize.x : realSize.y;
-		edit.putInt("maxWidth", width);
-		edit.putInt("maxHeight", height);
-		edit.commit();
+		determineScreenDimensions();
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mFiltersDrawer = findViewById(R.id.filters_drawer);
 
 		prepareDrawer();
-
-		mGridView = (CoverGridView) findViewById(R.id.lvMain);
 
 		mDrawerToggle = new ActionBarDrawerToggle(this, /* host Activity */
 		mDrawerLayout, /* DrawerLayout object */
@@ -114,32 +103,59 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		// Set the drawer toggle as the DrawerListener
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-		// ....................................
-		// Load state of filter from Bundle
-		if (savedInstanceState != null) {
-			mGridView.setSeriesFilter(savedInstanceState.getString("mSeriesFilter"));
-			mGridView.setSeriesFilterMode(savedInstanceState.getInt("mSeriesFilterMode"));
-			mGridView.setReadFilterMode(savedInstanceState.getInt("mReadFilterMode"));
-		} else {// if no state, load in default pref.
-			mGridView.setSeriesFilterMode(prefs.getInt("seriesFilter", 0));
-			mGridView.setReadFilterMode(prefs.getInt("readFilter", 0));
-		}// if
-
 		generateTitle();
 		checkInitialDrawerOptions();
-
-		// ....................................
-		// int barHeight =
-		// ((RelativeLayout)findViewById(R.id.topBar)).getHeight();
-		mGridView.init();
-		registerForContextMenu(mGridView); // Route event from Activity to View
 
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		getActionBar().setHomeButtonEnabled(true);
 
 		showNavigationDrawerOnFirstRun();
 
+		changeToCorrectFragment();
 	}// func
+
+	private void determineScreenDimensions() {
+		Editor edit = prefs.edit();
+		Point realSize = Util.getRealSize(getWindowManager().getDefaultDisplay());
+		int width = realSize.x < realSize.y ? realSize.x : realSize.y;
+		int height = realSize.x > realSize.y ? realSize.x : realSize.y;
+		edit.putInt("maxWidth", width);
+		edit.putInt("maxHeight", height);
+		edit.commit();
+	}
+
+	private void changeToCorrectFragment() {
+		FragmentManager fragmentManager = getFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+		if (noDataSynchronized()) {
+			setWelcomeFragmentAsContent(fragmentTransaction);
+		} else {
+			setComicGridAsContent(fragmentTransaction);
+		}
+
+		fragmentTransaction.commit();
+	}
+
+	private void setComicGridAsContent(FragmentTransaction fragmentTransaction) {
+		comicGridFragment = new ComicGridFragment();
+		fragmentTransaction.add(R.id.library_content, comicGridFragment);
+	}
+
+	private void setWelcomeFragmentAsContent(FragmentTransaction fragmentTransaction) {
+		WelcomeFragment fragment = new WelcomeFragment();
+		fragmentTransaction.add(R.id.library_content, fragment);
+
+		getActionBar().setTitle(R.string.app_name);
+		getActionBar().setSubtitle(null);
+	}
+
+	private boolean noDataSynchronized() {
+		getComicDao(getApplicationContext());
+		long comicsCount = comicDao.countOf();
+		OpenHelperManager.releaseHelper();
+		return comicsCount <= 0;
+	}
 
 	ExpandableListView expListView;
 	LibraryDrawerAdapter listAdapter;
@@ -166,8 +182,13 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}
 
 	private void checkInitialDrawerOptions() {
-		drawerChildClickListener.checkItem(SERIES_GROUP, mGridView.getSeriesFilterMode());
-		drawerChildClickListener.checkItem(READING_GROUP, mGridView.getReadFilterMode());
+		if (comicGridFragment != null) {
+			drawerChildClickListener.checkItem(SERIES_GROUP, comicGridFragment.getSeriesFilterMode());
+			drawerChildClickListener.checkItem(READING_GROUP, comicGridFragment.getReadFilterMode());
+		} else {
+			drawerChildClickListener.checkItem(SERIES_GROUP, 0);
+			drawerChildClickListener.checkItem(READING_GROUP, 0);
+		}
 	}
 
 	private void addDrawerChildClickListener() {
@@ -224,30 +245,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		e.commit();
 	}
 
-	protected void generateTitle() {
-		int seriesFilterMode = mGridView.getSeriesFilterMode();
-		int readingFilterMode = mGridView.getReadFilterMode();
-		String seriesFilter = mGridView.getSeriesFilter();
-
-		getActionBar().setSubtitle(null);
-		if (seriesFilterMode <= 0) {
-			getActionBar().setTitle(readFilters[readingFilterMode]);
-		} else {
-			if (!seriesFilter.isEmpty()) {
-				getActionBar().setTitle(seriesFilter);
-			} else {
-				getActionBar().setTitle(seriesFilters[seriesFilterMode]);
-			}
-			generateSubtitle(readingFilterMode);
-		}
-	}
-
-	private void generateSubtitle(int readingFilterMode) {
-		if (readingFilterMode > 0) {
-			getActionBar().setSubtitle(readFilters[readingFilterMode]);
-		}
-	}
-
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -301,68 +298,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		this.startActivityForResult(intent, 0);
 	}
 
-	@Override
-	protected void onSaveInstanceState(Bundle siState) {
-		// Save the state of the filters so
-		siState.putString("mSeriesFilter", mGridView.getSeriesFilter());
-		siState.putInt("mSeriesFilterMode", mGridView.getSeriesFilterMode());
-		siState.putInt("mReadFilterMode", mGridView.getReadFilterMode());
-		super.onSaveInstanceState(siState);
-	}// func
-
-	/*
-	 * ======================================================== State
-	 */
-	@Override
-	public void onPause() {
-		super.onPause();
-	}// func
-
-	@Override
-	protected void onStop() {
-		mGridView.nullAdapter();
-		super.onStop();
-	};
-
-	@Override
-	protected void onRestart() {
-		mGridView.recoverAdapter();
-		super.onRestart();
-	}
-
-	@Override
-	public void onResume() {
-		mGridView.scrollToLastPosition();
-		super.onResume();
-	}// func
-
-	/*
-	 * ======================================================== Context menu
-	 */
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-		switch (v.getId()) {
-		case R.id.lvMain:
-			mGridView.createContextMenu(menu, v, menuInfo);
-			break;
-		}// switch
-	}// func
-
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		mGridView.contextItemSelected(item);
-		return true;
-	}// func
-
 	/*
 	 * ======================================================== UI Events
 	 */
 	@Override
 	public void onBackPressed() {
 		// Override back press to make it easy to back out of series filter.
-		if (mGridView.isSeriesFiltered() && mGridView.getSeriesFilter() != "") {
-			mGridView.setSeriesFilter("");
-			mGridView.refreshData();
+		if (comicGridFragment != null && comicGridFragment.isSeriesView()) {
+			comicGridFragment.closeSeriesView();
 			generateTitle();
 		} else if (mDrawerLayout.isDrawerOpen(mFiltersDrawer)) {
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
@@ -458,23 +401,14 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		// ............................................
 		switch (status) {
 		case ComicLibrary.STATUS_COMPLETE:
-			mGridView.refreshData();
+			if (comicGridFragment != null) {
+				comicGridFragment.refreshData();
+			}
 			break;
 		case ComicLibrary.STATUS_NOSETTINGS:
 			Toast.makeText(this, getString(R.string.set_library_folders_first), Toast.LENGTH_LONG).show();
 			break;
 		}// switch
-	}// func
-
-	/* ======================================================== */
-	// @Override
-	@Override
-	public void onDataRefreshComplete() {
-		if (mGridView.isSeriesFiltered()) {// Filter by series
-			if (!mGridView.getSeriesFilter().isEmpty()) {
-				generateTitle();
-			}// if
-		}// if
 	}// func
 
 	private class DrawerChildClickListener implements OnChildClickListener {
@@ -544,7 +478,9 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			view.setPressed(true);
 			prefs.edit().putInt("readFilter", position).commit();
 
-			updateReadFilter(position);
+			if (comicGridFragment != null) {
+				comicGridFragment.updateReadFilter(position);
+			}
 
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
 			return true;
@@ -556,7 +492,9 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 			view.setPressed(true);
 			prefs.edit().putInt("seriesFilter", position).commit();
 
-			updateSeriesFilter(position);
+			if (comicGridFragment != null) {
+				comicGridFragment.updateSeriesFilter(position);
+			}
 
 			mDrawerLayout.closeDrawer(mFiltersDrawer);
 			return true;
@@ -567,19 +505,40 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 				previous.setPressed(false);
 			}
 		}
+	}
 
-		private void updateSeriesFilter(int position) {
-			if (mGridView.getSeriesFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
-				mGridView.setSeriesFilterMode(position);
-				mGridView.refreshData();
+	@Override
+	public void onDataRefreshComplete() {
+		generateTitle();
+	}
+
+	protected void generateTitle() {
+		ActionBar actionBar = getActionBar();
+
+		if (comicGridFragment != null) {
+			int seriesFilterMode = comicGridFragment.getSeriesFilterMode();
+			int readingFilterMode = comicGridFragment.getReadFilterMode();
+			String seriesFilter = comicGridFragment.getSeriesFilter();
+
+			actionBar.setSubtitle(null);
+			if (seriesFilterMode <= 0) {
+				actionBar.setTitle(readFilters[readingFilterMode]);
+			} else {
+				if (!seriesFilter.isEmpty()) {
+					actionBar.setTitle(seriesFilter);
+				} else {
+					actionBar.setTitle(seriesFilters[seriesFilterMode]);
+				}
+				generateSubtitle(readingFilterMode);
 			}
+		} else {
+			actionBar.setTitle(R.string.app_name);
 		}
+	}
 
-		private void updateReadFilter(int position) {
-			if (mGridView.getReadFilterMode() != position) {// initially, refreshdata gets called twice,its a waste.
-				mGridView.setReadFilterMode(position);
-				mGridView.refreshData();
-			}
+	private void generateSubtitle(int readingFilterMode) {
+		if (readingFilterMode > 0) {
+			getActionBar().setSubtitle(readFilters[readingFilterMode]);
 		}
 	}
 }// cls
