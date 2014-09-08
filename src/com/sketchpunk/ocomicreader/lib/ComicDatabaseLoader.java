@@ -61,7 +61,7 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 					queryBuilder.orderBy("dateRead", false);
 				} else { // normally order by series then issue
 					// TODO: add "order by" to drawer
-					queryBuilder.orderBy("series", true).orderBy("issue", true);
+					queryBuilder.orderByRaw("LOWER(`series`) ASC").orderBy("issue", true);
 				}
 
 				if (mReadFilterMode != 0 && mSeriesFilterMode != 0) {
