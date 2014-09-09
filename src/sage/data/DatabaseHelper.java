@@ -44,14 +44,9 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 	public void onUpgrade(SQLiteDatabase arg0, ConnectionSource arg1, int oldVersion, int newVersion) {
 		if (oldVersion < 2) { // Simplified database by changing reading history to a field
 			RuntimeExceptionDao<Comic, Integer> dao;
-			try {
-				dao = this.getComicRuntimeDao();
-				dao.executeRaw("ALTER TABLE `comics` ADD COLUMN dateRead DATE;");
-				dao.executeRaw("DROP TABLE `reading_history`;");
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			dao = this.getComicRuntimeDao();
+			dao.executeRaw("ALTER TABLE `comics` ADD COLUMN dateRead DATE;");
+			dao.executeRaw("DROP TABLE `reading_history`;");
 		}
 
 	}
@@ -63,7 +58,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 		return comicDao;
 	}
 
-	public RuntimeExceptionDao<Comic, Integer> getComicRuntimeDao() throws SQLException {
+	public RuntimeExceptionDao<Comic, Integer> getComicRuntimeDao() {
 		if (comicRuntimeDao == null) {
 			comicRuntimeDao = getRuntimeExceptionDao(Comic.class);
 		}

@@ -22,13 +22,6 @@
         android:background="#000000"
         android:orientation="vertical" >
 
-	    <ExpandableListView
-	        android:id="@+id/drawer_content"
-	        android:layout_height="match_parent"
-	        android:layout_width="match_parent"
-	        android:choiceMode="multipleChoice"
-	        android:divider="@android:color/transparent"
-	        android:dividerHeight="1dp" />      
     </LinearLayout>
 
 </android.support.v4.widget.DrawerLayout>

@@ -1,20 +1,14 @@
 package com.sketchpunk.ocomicreader;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 
 import sage.Util;
-import sage.adapter.LibraryDrawerAdapter;
 import sage.data.DatabaseHelper;
 import sage.data.domain.Comic;
 import android.app.ActionBar;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,8 +25,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ExpandableListView;
-import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
@@ -40,25 +32,24 @@ import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.runeai.runereader.R;
 import com.sketchpunk.ocomicreader.fragments.ComicGridFragment;
+import com.sketchpunk.ocomicreader.fragments.DrawerFragment;
 import com.sketchpunk.ocomicreader.fragments.WelcomeFragment;
 import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 import com.sketchpunk.ocomicreader.ui.CoverGridView;
 
-public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, CoverGridView.iCallback {
+public class LibraryActivity extends FragmentActivity implements ComicLibrary.SyncCallback, CoverGridView.iCallback, DrawerFragment.OnSettingsSelectedListener {
 
-	private static final int SERIES_GROUP = 0;
-	private static final int READING_GROUP = 1;
 	private ProgressDialog mProgress;
 	private RuntimeExceptionDao<Comic, Integer> comicDao;
-	private DrawerLayout mDrawerLayout;
-	private View mFiltersDrawer;
-	private ActionBarDrawerToggle mDrawerToggle;
-	private String[] readFilters;
-	private String[] seriesFilters;
+
 	private SharedPreferences prefs;
 	private long backPressed;
-	DrawerChildClickListener drawerChildClickListener;
 	ComicGridFragment comicGridFragment = null;
+	private ActionBarDrawerToggle mDrawerToggle;
+	private DrawerLayout mDrawerLayout;
+	private View mFiltersDrawer;
+	private DrawerFragment drawerFragment;
+	DatabaseHelper databaseHelper = null;
 
 	/*
 	 * ======================================================== Main
@@ -66,6 +57,8 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		databaseHelper = getHelper();
 
 		setContentView(R.layout.activity_library);
 		overridePendingTransition(R.anim.fadein, R.anim.fadeout);
@@ -77,8 +70,41 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mFiltersDrawer = findViewById(R.id.filters_drawer);
 
-		prepareDrawer();
+		createDrawerToggle();
 
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setHomeButtonEnabled(true);
+
+		addDrawerFragment();
+		changeToCorrectContentFragment();
+	}// func
+
+	private DatabaseHelper getHelper() {
+		if (databaseHelper == null) {
+			databaseHelper = OpenHelperManager.getHelper(this, DatabaseHelper.class);
+		}
+		return databaseHelper;
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		generateTitle();
+	}
+
+	private void addDrawerFragment() {
+		FragmentManager fragmentManager = getFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+		drawerFragment = new DrawerFragment();
+		fragmentTransaction.add(R.id.filters_drawer, drawerFragment);
+
+		fragmentTransaction.commit();
+	}
+
+	private void createDrawerToggle() {
 		mDrawerToggle = new ActionBarDrawerToggle(this, /* host Activity */
 		mDrawerLayout, /* DrawerLayout object */
 		R.drawable.ic_drawer, /* nav drawer icon to replace 'Up' caret */
@@ -99,20 +125,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 				super.onDrawerOpened(drawerView);
 			}
 		};
-
-		// Set the drawer toggle as the DrawerListener
-		mDrawerLayout.setDrawerListener(mDrawerToggle);
-
-		generateTitle();
-		checkInitialDrawerOptions();
-
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-		getActionBar().setHomeButtonEnabled(true);
-
-		showNavigationDrawerOnFirstRun();
-
-		changeToCorrectFragment();
-	}// func
+	}
 
 	private void determineScreenDimensions() {
 		Editor edit = prefs.edit();
@@ -124,7 +137,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		edit.commit();
 	}
 
-	private void changeToCorrectFragment() {
+	private void changeToCorrectContentFragment() {
 		FragmentManager fragmentManager = getFragmentManager();
 		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
@@ -139,110 +152,18 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	private void setComicGridAsContent(FragmentTransaction fragmentTransaction) {
 		comicGridFragment = new ComicGridFragment();
-		fragmentTransaction.add(R.id.library_content, comicGridFragment);
+		fragmentTransaction.replace(R.id.library_content, comicGridFragment);
 	}
 
 	private void setWelcomeFragmentAsContent(FragmentTransaction fragmentTransaction) {
 		WelcomeFragment fragment = new WelcomeFragment();
-		fragmentTransaction.add(R.id.library_content, fragment);
-
-		getActionBar().setTitle(R.string.app_name);
-		getActionBar().setSubtitle(null);
+		fragmentTransaction.replace(R.id.library_content, fragment);
 	}
 
 	private boolean noDataSynchronized() {
-		getComicDao(getApplicationContext());
+		comicDao = databaseHelper.getComicRuntimeDao();
 		long comicsCount = comicDao.countOf();
-		OpenHelperManager.releaseHelper();
 		return comicsCount <= 0;
-	}
-
-	ExpandableListView expListView;
-	LibraryDrawerAdapter listAdapter;
-	List<String> listDataHeader;
-	HashMap<String, List<String>> listDataChild;
-
-	private void prepareDrawer() {
-		// get the listview
-		expListView = (ExpandableListView) findViewById(R.id.drawer_content);
-
-		// preparing list data
-		prepareListData();
-
-		listAdapter = new LibraryDrawerAdapter(this, listDataHeader, listDataChild);
-
-		// setting list adapter
-		expListView.setAdapter(listAdapter);
-		expListView.setGroupIndicator(null);
-
-		expandAllDrawerGroups();
-		disableDrawerGroupsContracting();
-
-		addDrawerChildClickListener();
-	}
-
-	private void checkInitialDrawerOptions() {
-		if (comicGridFragment != null) {
-			drawerChildClickListener.checkItem(SERIES_GROUP, comicGridFragment.getSeriesFilterMode());
-			drawerChildClickListener.checkItem(READING_GROUP, comicGridFragment.getReadFilterMode());
-		} else {
-			drawerChildClickListener.checkItem(SERIES_GROUP, 0);
-			drawerChildClickListener.checkItem(READING_GROUP, 0);
-		}
-	}
-
-	private void addDrawerChildClickListener() {
-		drawerChildClickListener = new DrawerChildClickListener();
-		expListView.setOnChildClickListener(drawerChildClickListener);
-	}
-
-	private void disableDrawerGroupsContracting() {
-		expListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-
-			@Override
-			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-				return true;
-			}
-		});
-	}
-
-	private void expandAllDrawerGroups() {
-		for (int i = 0; i < listDataHeader.size(); i++) {
-			expListView.expandGroup(i);
-		}
-	}
-
-	private void prepareListData() {
-		listDataHeader = new ArrayList<String>();
-		listDataChild = new HashMap<String, List<String>>();
-
-		// Adding child data
-		listDataHeader.add(getString(R.string.series_filter_title));
-		listDataHeader.add(getString(R.string.read_filter_title));
-		listDataHeader.add(getString(R.string.other));
-
-		// Adding child data
-		seriesFilters = this.getResources().getStringArray(R.array.seriesFilter);
-		readFilters = this.getResources().getStringArray(R.array.readFilter);
-		List<String> other = Arrays.asList(this.getResources().getStringArray(R.array.other));
-
-		listDataChild.put(listDataHeader.get(0), Arrays.asList(seriesFilters)); // Header, Child data
-		listDataChild.put(listDataHeader.get(1), Arrays.asList(readFilters));
-		listDataChild.put(listDataHeader.get(2), other);
-	}
-
-	private void showNavigationDrawerOnFirstRun() {
-		boolean isFirstRun = prefs.getBoolean("isFirstRun", true);
-		if (isFirstRun) {
-			mDrawerLayout.openDrawer(mFiltersDrawer);
-			noteFirstRunIsDone();
-		}
-	}
-
-	private void noteFirstRunIsDone() {
-		Editor e = prefs.edit();
-		e.putBoolean("isFirstRun", false);
-		e.commit();
 	}
 
 	@Override
@@ -263,6 +184,13 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		inflater.inflate(R.menu.activity_main, menu);
 
 		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		OpenHelperManager.releaseHelper();
+		databaseHelper = null;
 	}
 
 	@Override
@@ -319,13 +247,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		}
 	}// func
 
-	private void getComicDao(Context context) {
-		if (comicDao == null) {
-			DatabaseHelper databaseHelper = OpenHelperManager.getHelper(context, DatabaseHelper.class);
-			comicDao = databaseHelper.getRuntimeExceptionDao(Comic.class);
-		}
-	}
-
 	private void showSyncDialog() {
 		sage.ui.Dialogs.ConfirmBox(this, getString(R.string.sync_library_popup_title), getString(R.string.sync_library_popup_message),
 				new DialogInterface.OnClickListener() {
@@ -337,7 +258,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}
 
 	private void goToLastComic() {
-		getComicDao(getApplicationContext());
+		comicDao = databaseHelper.getComicRuntimeDao();
 
 		QueryBuilder<Comic, Integer> lastComicQuery = comicDao.queryBuilder();
 		Comic lastRead = null;
@@ -346,8 +267,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		} catch (SQLException e) {
 			Log.e("sql", "Couldn't find last read comic " + e.getMessage());
 		}
-
-		OpenHelperManager.releaseHelper();
 
 		if (lastRead != null) {
 			Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
@@ -401,6 +320,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		// ............................................
 		switch (status) {
 		case ComicLibrary.STATUS_COMPLETE:
+			changeToCorrectContentFragment();
 			if (comicGridFragment != null) {
 				comicGridFragment.refreshData();
 			}
@@ -411,102 +331,6 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 		}// switch
 	}// func
 
-	private class DrawerChildClickListener implements OnChildClickListener {
-		private final View previousSeriesView = null;
-		private final View previousReadView = null;
-
-		@Override
-		public boolean onChildClick(ExpandableListView parent, View view, int groupPosition, int childPosition, long id) {
-			if (groupPosition < 2) {
-				checkItem(groupPosition, childPosition);
-			}
-			switch (groupPosition) {
-			case SERIES_GROUP:
-				return onSeriesSelected(view, childPosition);
-			case READING_GROUP:
-				return onReadSelected(view, childPosition);
-			case 2:
-				return onSettingSelected(childPosition);
-			default:
-				return false;
-			}
-		}
-
-		public void checkItem(int groupPosition, int childPosition) {
-			int startingId = getGroupStartingId(groupPosition);
-			uncheckAllGroupOptions(groupPosition, startingId);
-			expListView.setItemChecked(startingId + childPosition, true);
-		}
-
-		private void uncheckAllGroupOptions(int groupPosition, int startingId) {
-			for (int i = startingId; i < startingId + listAdapter.getChildrenCount(groupPosition); i++) {
-				expListView.setItemChecked(i, false);
-			}
-		}
-
-		private int getGroupStartingId(int groupPosition) {
-			int position = 0;
-			for (int i = 0; i < groupPosition; i++) {
-				position += listAdapter.getChildrenCount(i) + 0;
-			}
-			position += groupPosition + 1; // group titles
-			return position;
-		}
-
-		private boolean onSettingSelected(int position) {
-			switch (position) {
-			case 0: // Sync
-				showSyncDialog();
-				return true;
-			case 1: // Settings
-				goToSettings();
-				break;
-			case 2: // About
-				showAbout();
-				return true;
-			default:
-				return false;
-			}
-
-			mDrawerLayout.closeDrawer(mFiltersDrawer);
-			return true;
-		}
-
-		private boolean onReadSelected(View view, int position) {
-			unpress(previousReadView);
-
-			view.setPressed(true);
-			prefs.edit().putInt("readFilter", position).commit();
-
-			if (comicGridFragment != null) {
-				comicGridFragment.updateReadFilter(position);
-			}
-
-			mDrawerLayout.closeDrawer(mFiltersDrawer);
-			return true;
-		}
-
-		private boolean onSeriesSelected(View view, int position) {
-			unpress(previousSeriesView);
-
-			view.setPressed(true);
-			prefs.edit().putInt("seriesFilter", position).commit();
-
-			if (comicGridFragment != null) {
-				comicGridFragment.updateSeriesFilter(position);
-			}
-
-			mDrawerLayout.closeDrawer(mFiltersDrawer);
-			return true;
-		}
-
-		private void unpress(View previous) {
-			if (previous != null) {
-				previous.setPressed(false);
-			}
-		}
-	}
-
 	@Override
 	public void onDataRefreshComplete() {
 		generateTitle();
@@ -515,19 +339,19 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	protected void generateTitle() {
 		ActionBar actionBar = getActionBar();
 
-		if (comicGridFragment != null) {
+		if (comicGridFragment != null && drawerFragment != null) {
 			int seriesFilterMode = comicGridFragment.getSeriesFilterMode();
 			int readingFilterMode = comicGridFragment.getReadFilterMode();
 			String seriesFilter = comicGridFragment.getSeriesFilter();
 
 			actionBar.setSubtitle(null);
 			if (seriesFilterMode <= 0) {
-				actionBar.setTitle(readFilters[readingFilterMode]);
+				actionBar.setTitle(drawerFragment.getReadFilters()[readingFilterMode]);
 			} else {
 				if (!seriesFilter.isEmpty()) {
 					actionBar.setTitle(seriesFilter);
 				} else {
-					actionBar.setTitle(seriesFilters[seriesFilterMode]);
+					actionBar.setTitle(drawerFragment.getSeriesFilters()[seriesFilterMode]);
 				}
 				generateSubtitle(readingFilterMode);
 			}
@@ -537,8 +361,44 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}
 
 	private void generateSubtitle(int readingFilterMode) {
-		if (readingFilterMode > 0) {
-			getActionBar().setSubtitle(readFilters[readingFilterMode]);
+		if (drawerFragment != null) {
+			if (readingFilterMode > 0) {
+				getActionBar().setSubtitle(drawerFragment.getReadFilters()[readingFilterMode]);
+			}
 		}
 	}
-}// cls
+
+	@Override
+	public boolean onSettingSelected(int childPosition) {
+		switch (childPosition) {
+		case 0: // Sync
+			showSyncDialog();
+			return true;
+		case 1: // Settings
+			goToSettings();
+			break;
+		case 2: // About
+			showAbout();
+			return true;
+		default:
+			return false;
+		}
+
+		mDrawerLayout.closeDrawer(mFiltersDrawer);
+		return true;
+	}
+
+	@Override
+	public void onReadFilterSelected(int position) {
+		if (comicGridFragment != null) {
+			comicGridFragment.updateReadFilter(position);
+		}
+	}
+
+	@Override
+	public void onSeriesFilterSelected(int position) {
+		if (comicGridFragment != null) {
+			comicGridFragment.updateSeriesFilter(position);
+		}
+	}
+}

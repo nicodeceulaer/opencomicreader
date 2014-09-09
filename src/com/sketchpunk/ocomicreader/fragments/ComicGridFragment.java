@@ -96,7 +96,9 @@ public class ComicGridFragment extends Fragment {
 	}
 
 	public void refreshData() {
-		mGridView.refreshData();
+		if (mGridView != null) {
+			mGridView.refreshData();
+		}
 	}
 
 	public void updateSeriesFilter(int position) {
@@ -123,14 +125,26 @@ public class ComicGridFragment extends Fragment {
 	}
 
 	public int getSeriesFilterMode() {
-		return mGridView.getSeriesFilterMode();
+		if (mGridView != null) {
+			return mGridView.getSeriesFilterMode();
+		} else {
+			return 0;
+		}
 	}
 
 	public int getReadFilterMode() {
-		return mGridView.getReadFilterMode();
+		if (mGridView != null) {
+			return mGridView.getReadFilterMode();
+		} else {
+			return 0;
+		}
 	}
 
 	public String getSeriesFilter() {
-		return mGridView.getSeriesFilter();
+		if (mGridView != null) {
+			return mGridView.getSeriesFilter();
+		} else {
+			return "";
+		}
 	}
 }
