@@ -74,9 +74,11 @@ public class ComicGridFragment extends Fragment {
 	@Override
 	public void onResume() {
 		mGridView.recoverAdapter();
+
+		super.onResume();
+
 		mGridView.invalidate();
 		mGridView.scrollToLastPosition();
-		super.onResume();
 	}
 
 	@Override

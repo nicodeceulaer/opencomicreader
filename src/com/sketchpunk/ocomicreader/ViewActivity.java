@@ -336,9 +336,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		if (isSuccess) { // Save reading progress.
 			if (currentComic != null) {
 
+				int pageRead = currentPage + 1;
 				currentComic.setPageCurrent(currentPage);
-				if (currentComic.getPageRead() < currentPage) {
-					currentComic.setPageRead(currentPage);
+				if (currentComic.getPageRead() < pageRead) {
+					currentComic.setPageRead(pageRead);
 				}
 				comicDao.update(currentComic);
 			}// if

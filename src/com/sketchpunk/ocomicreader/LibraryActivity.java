@@ -25,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
@@ -151,13 +152,16 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}
 
 	private void setComicGridAsContent(FragmentTransaction fragmentTransaction) {
-		comicGridFragment = new ComicGridFragment();
-		fragmentTransaction.replace(R.id.library_content, comicGridFragment);
+		if (comicGridFragment == null) {
+			comicGridFragment = new ComicGridFragment();
+			fragmentTransaction.replace(R.id.library_content, comicGridFragment);
+		}
 	}
 
 	private void setWelcomeFragmentAsContent(FragmentTransaction fragmentTransaction) {
 		WelcomeFragment fragment = new WelcomeFragment();
 		fragmentTransaction.replace(R.id.library_content, fragment);
+		comicGridFragment = null;
 	}
 
 	private boolean noDataSynchronized() {
@@ -332,8 +336,21 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	}// func
 
 	@Override
-	public void onDataRefreshComplete() {
+	public void onDataRefreshComplete(int recordCount) {
 		generateTitle();
+
+		updateNothingFoundMessage(recordCount);
+	}
+
+	private void updateNothingFoundMessage(int recordCount) {
+		TextView tv = (TextView) findViewById(R.id.nothingFound);
+		if (tv != null) {
+			if (recordCount == 0) {
+				tv.setVisibility(View.VISIBLE);
+			} else {
+				tv.setVisibility(View.GONE);
+			}
+		}
 	}
 
 	protected void generateTitle() {

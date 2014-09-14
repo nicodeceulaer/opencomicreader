@@ -17,6 +17,7 @@
     <string name="read_left_to_right">Read Left to Right</string>
     <string name="immersive_mode">Immersive mode</string>
     <string name="fullscreen_mode">Fullscreen mode</string>
+    <string name="nothing_found">Nothing found for given filters. Try changing series or reading filter.</string>
     <string name="options">Options</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>

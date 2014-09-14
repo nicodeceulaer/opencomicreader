@@ -1,17 +1,39 @@
-<com.sketchpunk.ocomicreader.ui.CoverGridView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/lvMain"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:clipToPadding="false"
-    android:drawSelectorOnTop="true"
-    android:focusable="true"
-    android:focusableInTouchMode="true"
-    android:gravity="center"
-    android:listSelector="@drawable/item_selected"
-    android:numColumns="2"
-    android:scrollbarStyle="insideOverlay"
-    android:stretchMode="columnWidth" >
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/library_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/library_background" >    
 
-    <requestFocus />
+	<TextView
+        android:id="@+id/nothingFound"
+        android:layout_width="match_parent"
+        android:text="@string/nothing_found"
+        android:textSize="15sp"
+        android:textColor="#e6e6e6"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="3dp"
+	    android:layout_marginLeft="5dp"
+	    android:visibility="gone" />
 
-</com.sketchpunk.ocomicreader.ui.CoverGridView>
+	<com.sketchpunk.ocomicreader.ui.CoverGridView
+	    android:id="@+id/lvMain"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:clipToPadding="false"
+	    android:drawSelectorOnTop="true"
+	    android:focusable="true"
+	    android:focusableInTouchMode="true"
+	    android:gravity="center"
+	    android:listSelector="@drawable/item_selected"
+	    android:numColumns="2"
+	    android:scrollbarStyle="insideOverlay"
+	    android:stretchMode="columnWidth" >
+	
+	    <requestFocus />
+
+	</com.sketchpunk.ocomicreader.ui.CoverGridView>
+
+</RelativeLayout>

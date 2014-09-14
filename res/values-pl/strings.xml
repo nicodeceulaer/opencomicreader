@@ -17,6 +17,7 @@
     <string name="read_left_to_right">Czytaj od lewej do prawej</string>
     <string name="immersive_mode">Tryb immersywny</string>
     <string name="fullscreen_mode">Tryb pełnoekranowy</string>
+    <string name="nothing_found">Nie znaleziono komiksów spełniających podane filtry. Spróbuj zmienić filtr czytania lub serii.</string>
     <string name="options">Opcje</string>
     <string name="settings">Ustawienia</string>
     <string name="about">O programie</string>

@@ -98,8 +98,15 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 
 	// @formatter:off
 	private String getSeriesSearchString() {
-		return "SELECT min(id)[id], " + "series[title], " + "sum(pageCount)[pageCount], " + "sum(pageRead)[pageRead], " + "count(id) [issue] " + "FROM comics "
-				+ getReadFilterStringForSeries() + "GROUP BY LOWER(series) " + "ORDER BY LOWER(series)";
+		return "SELECT min(id), " 
+				+ "series, " 
+				+ "sum(pageCount), " 
+				+ "sum(pageRead), " 
+				+ "count(id) " 
+				+ "FROM comics "
+				+ "GROUP BY LOWER(series) "
+				+ getReadFilterStringForSeries() 
+				+ "ORDER BY LOWER(series) ";
 	}
 
 	// @formatter:on
@@ -109,11 +116,11 @@ public class ComicDatabaseLoader extends AsyncTaskLoader<Collection<Comic>> {
 		default:
 			return "";
 		case 1:
-			return "WHERE pageRead = 0 ";
+			return "HAVING sum(pageRead) = 0 ";
 		case 2:
-			return "WHERE pageRead > 0 AND pageRead < pageCount - 1 ";
+			return "HAVING sum(pageRead) > 0 AND sum(pageRead) < sum(pageCount) - 1 ";
 		case 3:
-			return "WHERE pageRead >= pageCount - 1 ";
+			return "HAVING sum(pageRead) >= sum(pageCount) - 1 ";
 		}// switch
 	}
 

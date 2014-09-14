@@ -38,7 +38,7 @@ import com.sketchpunk.ocomicreader.lib.ComicLibrary;
 public class CoverGridView extends GridView implements OnItemClickListener, LoaderManager.LoaderCallbacks<Collection<Comic>> {
 
 	public interface iCallback {
-		void onDataRefreshComplete();
+		void onDataRefreshComplete(int recordCount);
 	}
 
 	private ComicGridAdapter mAdapter;
@@ -55,7 +55,6 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	private int mThumbPadding = 0;
 	private int mGridPadding = 0;
 	private int mGridColNum = 2;
-	private int mCoverHeight = 0;
 
 	public CoverGridView(Context context) {
 		super(context);
@@ -76,7 +75,6 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 			this.mGridColNum = prefs.getInt("libColCnt", 4);
 			this.mGridPadding = prefs.getInt("libPadding", 0);
 			this.mThumbPadding = prefs.getInt("libCoverPad", 3);
-			this.mCoverHeight = prefs.getInt("syncCoverHeight", 300);
 		} catch (Exception e) {
 			Log.e("prefs", "Error Loading Library Prefs " + e.getMessage());
 		}// try
@@ -121,7 +119,9 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	}
 
 	public void recoverAdapter() {
-		this.setAdapter(mAdapter);
+		if (comicDatabaseLoader != null) {
+			comicDatabaseLoader.forceLoad();
+		}
 	}
 
 	public void scrollToLastPosition() {
@@ -335,11 +335,18 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 	@Override
 	public void onLoadFinished(Loader<Collection<Comic>> arg0, Collection<Comic> arg1) {
 		this.recordCount = arg1.size();
-		mAdapter.clear();
-		mAdapter.addAll(arg1);
+		if (this.getAdapter() == null) {
+			this.setAdapter(mAdapter);
+			mAdapter.clear();
+			mAdapter.addAll(arg1);
+			scrollToLastPosition();
+		} else {
+			mAdapter.clear();
+			mAdapter.addAll(arg1);
+		}
 
 		if (this.getContext() instanceof iCallback)
-			((iCallback) this.getContext()).onDataRefreshComplete();
+			((iCallback) this.getContext()).onDataRefreshComplete(this.recordCount);
 	}
 
 	@Override
