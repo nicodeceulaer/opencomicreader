@@ -1,5 +1,6 @@
 package sage.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
@@ -44,14 +45,8 @@ public class ActivityUtil {
 			final View rootView = act.getWindow().getDecorView();
 
 			// enable immersive mode if device build version is at 4.4 or higher
-			if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-
-				rootView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-						| View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-						| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
-			} else { // else enable legacy fullscreen mode
+			if (!setImmersiveModeOn(act)) {
+				// enable legacy fullscreen mode
 				winFlags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
 				rootView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
 
@@ -91,7 +86,8 @@ public class ActivityUtil {
 			act.getWindow().addFlags(winFlags);
 	}// func
 
-	public static void setImmersiveModeOn(final Activity act) {
+	@SuppressLint("InlinedApi")
+	public static boolean setImmersiveModeOn(final Activity act) {
 		// enable immersive mode if device build version is at 4.4 or higher
 		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			final View rootView = act.getWindow().getDecorView();
@@ -99,7 +95,17 @@ public class ActivityUtil {
 					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
 					| View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
 					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-		}// if
-	}// func
+			return true;
+		}
+		return false;
+	}
+
+	@SuppressLint("InlinedApi")
+	public static boolean setFullscreenModeOn(final Activity activity) {
+		final View rootView = activity.getWindow().getDecorView();
+		// Set flags for hiding status bar and navigation bar
+		rootView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
+		return true;
+	}
 
 }// cls

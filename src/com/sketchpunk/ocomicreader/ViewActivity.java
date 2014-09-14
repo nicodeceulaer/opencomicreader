@@ -26,6 +26,7 @@ import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
@@ -176,8 +177,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			getComicDao();
 		}
 
-		if (mPref_FullScreen)
-			ActivityUtil.setImmersiveModeOn(this);
+		turnFullscreenIfNeeded();
 	}// func
 
 	@Override
@@ -196,7 +196,7 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 		menu.findItem(R.id.mnu_readright).setChecked(mPref_ReadRight);
 		if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-			menu.findItem(R.id.mnu_immersive).setVisible(false);
+			menu.findItem(R.id.mnu_immersive).setTitle(R.string.fullscreen_mode);
 		}
 
 		switch (mImageView.getScaleMode()) {
@@ -266,14 +266,14 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 			break;
 
 		case R.id.mnu_immersive:
-			ActivityUtil.setImmersiveModeOn(this);
+			if (!ActivityUtil.setImmersiveModeOn(this)) {
+				ActivityUtil.setFullscreenModeOn(this);
+			}
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			return true;
 		}// switch
 
-		// Popup pulls the activity out of immersive mode, after action, turn it
-		// back on.
-		if (mPref_FullScreen)
-			ActivityUtil.setImmersiveModeOn(this);
+		turnFullscreenIfNeeded();
 		return true;
 	}// func
 
@@ -284,9 +284,16 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 		// Popup pulls the activity out of immersive mode, after action, turn it
 		// back on.
-		if (mPref_FullScreen)
-			ActivityUtil.setImmersiveModeOn(this);
+		turnFullscreenIfNeeded();
 	}// func
+
+	private void turnFullscreenIfNeeded() {
+		if (mPref_FullScreen) {
+			if (!ActivityUtil.setImmersiveModeOn(this)) {
+				ActivityUtil.setFullscreenModeOn(this);
+			}
+		}
+	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {

@@ -43,7 +43,7 @@ public class LibraryDrawerAdapter extends BaseExpandableListAdapter {
 
 		if (convertView == null) {
 			LayoutInflater infalInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			convertView = infalInflater.inflate(R.layout.library_drawer_list_item, null);
+			convertView = infalInflater.inflate(R.layout.library_drawer_list_item, parent, false);
 		}
 
 		TextView txtListChild = (TextView) convertView.findViewById(R.id.list_item_title);
@@ -77,7 +77,7 @@ public class LibraryDrawerAdapter extends BaseExpandableListAdapter {
 		String headerTitle = (String) getGroup(groupPosition);
 		if (convertView == null) {
 			LayoutInflater infalInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			convertView = infalInflater.inflate(R.layout.library_drawer_group, null);
+			convertView = infalInflater.inflate(R.layout.library_drawer_group, parent, false);
 		}
 
 		TextView lblListHeader = (TextView) convertView.findViewById(R.id.group_title);

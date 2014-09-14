@@ -16,11 +16,13 @@
     <string name="orientation_landscape">Lock to landscape</string>
     <string name="read_left_to_right">Read Left to Right</string>
     <string name="immersive_mode">Immersive mode</string>
+    <string name="fullscreen_mode">Fullscreen mode</string>
     <string name="options">Options</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="sync">Scan library</string>
     <string name="action_last">Last</string>
+    <string name="image_cover">Image cover</string>
     <string name="drawer_open">Open drawer</string>
     <string name="drawer_close">Close drawer</string>
     <string name="series_filter_title">Filter by series</string>

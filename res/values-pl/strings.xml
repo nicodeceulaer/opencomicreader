@@ -16,11 +16,13 @@
     <string name="orientation_landscape">Zawsze poziomo</string>
     <string name="read_left_to_right">Czytaj od lewej do prawej</string>
     <string name="immersive_mode">Tryb immersywny</string>
+    <string name="fullscreen_mode">Tryb pełnoekranowy</string>
     <string name="options">Opcje</string>
     <string name="settings">Ustawienia</string>
     <string name="about">O programie</string>
     <string name="sync">Skanuj bibliotekę</string>
     <string name="action_last">Ostatni</string>
+    <string name="image_cover">Image cover</string>
     <string name="drawer_open">Otwórz szufladę</string>
     <string name="drawer_close">Zamknij szufladę</string>
     <string name="series_filter_title">Filtruj po serii</string>
