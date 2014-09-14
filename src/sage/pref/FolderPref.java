@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.os.Environment;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
@@ -76,7 +77,8 @@ public class FolderPref extends DialogPreference implements DialogInterface.OnCl
 		mListView = new ListView(this.getContext());
 		mListView.setOnItemClickListener(this);
 		mListView.setAdapter(mAdapter);
-		container.addView(mListView, LinearLayout.LayoutParams.MATCH_PARENT, 250);
+		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 280, container.getResources().getDisplayMetrics());
+		container.addView(mListView, LinearLayout.LayoutParams.MATCH_PARENT, px);
 
 		// ......................................
 		return container;
