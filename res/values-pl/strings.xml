@@ -17,7 +17,6 @@
     <string name="read_left_to_right">Czytaj od lewej do prawej</string>
     <string name="immersive_mode">Tryb immersywny</string>
     <string name="options">Opcje</string>
-    <string name="menu_settings">Ustawienia</string>
     <string name="settings">Ustawienia</string>
     <string name="about">O programie</string>
     <string name="sync">Skanuj bibliotekę</string>
@@ -49,6 +48,10 @@
         - maximeh\n
         - cedricje
     </string>
+    <string name="welcome_text">Witamy w programie Rune Reader \n\n
+        Wybierz folder z Twoimi komiksami w ustawieniach. Następnie wciśnij przycisk synchronizacji.\n\n
+        Po dodaniu nowych komiksów do tego folderu wymagane będzie ponowne wykonanie synchronizacji.\n\n
+        Skanowanie może zająć dużo czasu dla obszernych bibliotek.</string>
 
     <string-array name="scaleMode">
         <item>Brak</item>

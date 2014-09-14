@@ -17,7 +17,6 @@
     <string name="read_left_to_right">Read Left to Right</string>
     <string name="immersive_mode">Immersive mode</string>
     <string name="options">Options</string>
-    <string name="menu_settings">Settings</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="sync">Scan library</string>
@@ -49,6 +48,10 @@
         - maximeh\n
         - cedricje
     </string>
+    <string name="welcome_text">Welcome to the Rune Reader \n\n
+        To begin enter settings and choose comic library folder. Afterwards use refresh scan button to search for new comics.\n\n
+        When you add new comics in the future be sure to re-run scan option.\n\n
+        Scanning might take a while depending on your library size.</string>
 
     <string-array name="scaleMode">
         <item>None</item>
