@@ -17,6 +17,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
@@ -77,7 +78,7 @@ public class CoverGridView extends GridView implements OnItemClickListener, Load
 			this.mThumbPadding = prefs.getInt("libCoverPad", 3);
 			this.mCoverHeight = prefs.getInt("syncCoverHeight", 300);
 		} catch (Exception e) {
-			System.err.println("Error Loading Library Prefs " + e.getMessage());
+			Log.e("prefs", "Error Loading Library Prefs " + e.getMessage());
 		}// try
 
 		// ....................................

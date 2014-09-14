@@ -10,6 +10,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -250,7 +251,7 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaint);
 			}
 		} else
-			System.out.println("Bitmap is null");
+			Log.d("reader", "Bitmap is null");
 	}// func
 
 	// ========================================================================
@@ -344,9 +345,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 
 	@Override
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-		// System.out.format("FLing %d %d %d %n", (int)Math.abs(e1.getY() -
-		// e2.getY()), (int)Math.abs(e1.getX() - e2.getX()),
-		// (int)Math.abs(velocityX));
 		if (Math.abs(velocityX) < 500)
 			return false; // To slow, don't register as a fling.
 		if (Math.abs(e1.getY() - e2.getY()) > 250)
@@ -369,8 +367,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	@Override
 	public boolean onSingleTapConfirmed(MotionEvent e) {
 		float x = e.getX();
-
-		System.out.format("TAP %f %d %n", x, this.getWidth());
 
 		if (x >= this.getWidth() - mTapBoundary) {
 			invokeGesture(TAPRIGHT);

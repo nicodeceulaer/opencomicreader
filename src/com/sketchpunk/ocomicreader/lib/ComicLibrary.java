@@ -236,7 +236,7 @@ public class ComicLibrary {
 
 				rtn = true;
 			} catch (Exception e) {
-				System.err.println("Error creating thumb " + e.getMessage());
+				Log.e("library", "Error creating thumb " + e.getMessage());
 				if (bmp != null) {
 					bmp.recycle();
 					bmp = null;

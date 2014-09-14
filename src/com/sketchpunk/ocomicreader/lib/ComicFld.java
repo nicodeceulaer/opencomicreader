@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 import sage.io.FFilter;
+import android.util.Log;
 
 public class ComicFld implements iComicArchive {
 	private File mFile;
@@ -65,15 +66,15 @@ public class ComicFld implements iComicArchive {
 
 			// ..................................
 			if (pageList.size() > 0) {
-				if(comparator != null) {
-				Collections.sort(pageList, comparator); // Sort the page names\
+				if (comparator != null) {
+					Collections.sort(pageList, comparator); // Sort the page names\
 				} else {
-					Collections.sort(pageList); // Sort the page names\	
+					Collections.sort(pageList); // Sort the page names\
 				}
 				return pageList;
 			}// if
 		} catch (Exception e) {
-			System.err.println("LoadArchive " + e.getMessage());
+			Log.e("reader", "Error getting page list for comic directory " + e.getMessage());
 		}// try
 
 		return null;
@@ -88,7 +89,7 @@ public class ComicFld implements iComicArchive {
 
 			return new FileInputStream(file);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			Log.e("reader", "Error getting input stream for comic directory " + e.getMessage());
 		}// try
 		return null;
 	}// func
@@ -125,7 +126,7 @@ public class ComicFld implements iComicArchive {
 				outVar[2] = metaPath;
 			}// if
 		} catch (Exception e) {
-			System.err.println("getLibraryData " + e.getMessage());
+			Log.e("reader", "Error getting library data for comic directory " + e.getMessage());
 			return false;
 		}// try
 

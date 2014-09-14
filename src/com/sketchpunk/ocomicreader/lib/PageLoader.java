@@ -12,6 +12,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class PageLoader {
 	public static interface CallBack {
@@ -91,7 +92,7 @@ public class PageLoader {
 	protected static class LoadingTask extends AsyncTask<Object, Object, Bitmap> { // <Params, Progress, Result>
 		private WeakReference<iComicArchive> mArchive = null;
 		private WeakReference<CallBack> mCallBack = null;
-		private String errMsg = null;
+		private final String errMsg = null;
 		public String imagePath = null;
 		private final int mImgType;
 
@@ -128,7 +129,7 @@ public class PageLoader {
 				BitmapFactory.decodeStream(iStream, null, bmpOption);
 				iStream = resetArchiveStream(archive, iStream);
 			} catch (Exception e) {
-				System.out.println("Error Getting Image Size " + e.getMessage());
+				Log.e("reader", "Error Getting Image Size " + e.getMessage());
 			}// try
 
 			// ...................................
@@ -146,30 +147,32 @@ public class PageLoader {
 
 					bmp = BitmapFactory.decodeStream(iStream, null, bmpOption);
 					if (bmp == null) {
-						iScale *= 2;
-						continue;
+						Log.e("reader", String.format("Loaded bmp was null. Treating as out of memory error"));
+						throw new OutOfMemoryError();
 					}
 					break; // exit loop, successful loading of image.
 				} catch (OutOfMemoryError e) {
-					System.out.println("-----Out of memory error " + Integer.toString(iScale));
-					if (i < 3) {
-						iScale *= 2;
-					}
-
-					if (i == 3)
-						bmpOption.inPreferredConfig = Bitmap.Config.RGB_565; // Try to use up less memory
-
-					// if forth attempt, give up.
 					if (i == 4) {
-						errMsg = "Out of memory loading image";
-						System.out.println(errMsg);
+						Log.e("reader", String.format("Unable to recover from out of memory errors. Giving up. iScale %d. Out image dimensions: %dx%d", iScale,
+								bmpOption.outWidth, bmpOption.outHeight));
 						if (bmp != null)
 							bmp.recycle();
 						return null;
 					}// if
+
+					Log.e("reader",
+							String.format("Out of memory error with iScale %d. Out image dimensions: %dx%d", iScale, bmpOption.outWidth, bmpOption.outHeight));
+
+					if (i % 2 == 0) {
+						Log.d("reader", String.format("Recovering from out of memory error. Attempt %d. Changing bitmap storage to RGB_565", i));
+						bmpOption.inPreferredConfig = Bitmap.Config.RGB_565;
+					} else {
+						Log.d("reader", String.format("Recovering from out of memory error. Attempt %d. Lowering iScale to ", i, iScale * 2));
+						bmpOption.inPreferredConfig = Bitmap.Config.ARGB_8888;
+						iScale *= 2;
+					}
 				} catch (Exception e) {
-					errMsg = "Error Loading Image " + e.getMessage();
-					System.out.println(errMsg);
+					Log.e("reader", "Error Loading Image " + e.getMessage());
 					return null;
 				}// try
 			}// for
@@ -206,7 +209,7 @@ public class PageLoader {
 						newBmp = null; // Clear reference so it doesn't get recycled.
 						break;
 					} catch (OutOfMemoryError e) {
-						System.out.println("Out of memory rescaling");
+						Log.e("reader", "Out of memory whire rescaling image. " + e.getMessage());
 						if (newBmp != null) {
 							newBmp.recycle();
 							newBmp = null;
@@ -215,12 +218,10 @@ public class PageLoader {
 						if (i == 1) {
 							bmp.recycle();
 							bmp = null;
-							errMsg = "Out of memory while rescaling image.";
-							System.out.println(errMsg);
+							Log.e("reader", "Out of memory whire rescaling image. " + e.getMessage());
 						}// if
 					} catch (Exception e) {
-						errMsg = "Error Rescaling Image for Display : " + e.getMessage();
-						System.out.println(errMsg);
+						Log.e("reader", "Error Rescaling Image for Display. " + e.getMessage());
 
 						if (bmp != null) {
 							bmp.recycle();

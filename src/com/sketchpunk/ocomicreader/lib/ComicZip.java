@@ -11,6 +11,8 @@ import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import android.util.Log;
+
 public class ComicZip implements iComicArchive {
 	private ZipFile mArchive;
 	private Comparator<String> comparator;
@@ -52,9 +54,9 @@ public class ComicZip implements iComicArchive {
 	public boolean loadFile(String path) {
 		try {
 			mArchive = new ZipFile(path);
-			return true; 
+			return true;
 		} catch (Exception e) {
-			System.out.println("Couldn't open zip at path " + path);
+			Log.e("reader", "Couldn't open zip at path " + path);
 		}// try;
 		return false;
 	}// func
@@ -76,23 +78,22 @@ public class ComicZip implements iComicArchive {
 					continue;
 
 				itmName = itm.getName().toLowerCase(Locale.getDefault());
-				if (itmName.endsWith(".jpg") || itmName.endsWith(".gif")
-						|| itmName.endsWith(".png")) {
+				if (itmName.endsWith(".jpg") || itmName.endsWith(".gif") || itmName.endsWith(".png")) {
 					pageList.add(itm.getName());
 				}// if
 			}// while
 
 			// ..................................
 			if (pageList.size() > 0) {
-				if(comparator != null) {
-					Collections.sort(pageList, comparator);	
+				if (comparator != null) {
+					Collections.sort(pageList, comparator);
 				} else {
 					Collections.sort(pageList);
 				}
 				return pageList;
 			}// if
 		} catch (Exception e) {
-			System.err.println("LoadArchive " + e.getMessage());
+			Log.e("reader", "Error reading comic zip archive " + e.getMessage());
 		}// try
 
 		return null;
@@ -136,8 +137,7 @@ public class ComicZip implements iComicArchive {
 
 				itmName = itm.getName();
 				compare = itmName.toLowerCase(Locale.getDefault());
-				if (compare.endsWith(".jpg") || compare.endsWith(".gif")
-						|| compare.endsWith(".png")) {
+				if (compare.endsWith(".jpg") || compare.endsWith(".gif") || compare.endsWith(".png")) {
 					if (pgCnt == 0 || itmName.compareTo(coverPath) < 0)
 						coverPath = itmName;
 					pgCnt++;
@@ -152,7 +152,7 @@ public class ComicZip implements iComicArchive {
 				outVar[2] = metaPath;
 			}// if
 		} catch (Exception e) {
-			System.err.println("getLibraryData " + e.getMessage());
+			Log.e("reader", "Error getting library data for zip archive " + e.getMessage());
 			return false;
 		}// try
 
@@ -186,7 +186,7 @@ public class ComicZip implements iComicArchive {
 			if (metaPath.isEmpty())
 				return null;
 		} catch (Exception e) {
-			System.err.println("error getting meta data " + e.getMessage());
+			Log.e("reader", "Error getting meta data from zip archive " + e.getMessage());
 			return null;
 		}// try
 
@@ -198,7 +198,7 @@ public class ComicZip implements iComicArchive {
 			data = MetaParser.ComicRack(iStream);
 			iStream.close();
 		} catch (IOException e) {
-			System.err.println("getting meta from zip " + e.getMessage());
+			Log.e("reader", "Error getting meta data from zip archive " + e.getMessage());
 		}// try
 
 		// ......................................................

@@ -38,10 +38,8 @@ public class ImgTransform {
 	}// func
 
 	public void configChange(View view) {
-		System.out.println(mViewWidth);
 		mViewWidth = view.getWidth();
 		mViewHeight = view.getHeight();
-		System.out.println(mViewWidth);
 
 		srcRect.setEmpty();
 		viewRect.setEmpty();
@@ -155,7 +153,6 @@ public class ImgTransform {
 	}// func
 
 	private boolean calcPan(float distanceX, float distanceY, boolean useScale, int[] outX, int[] outY) {
-		System.out.println("calcPan");
 		int x = 0, y = 0, h = srcRect.height(), w = srcRect.width();
 
 		// Adjust the panning to how much the image is scaled.
@@ -294,9 +291,6 @@ public class ImgTransform {
 		viewRect.top = viewRectTop;
 		viewRect.right = viewRectLeft + viewRectWidth;
 		viewRect.bottom = viewRectTop + viewRectHeight;
-
-		System.out.println("Scale Applied");
-		System.out.println(viewRect.width());
 
 		mIsInit = false;
 		return true;

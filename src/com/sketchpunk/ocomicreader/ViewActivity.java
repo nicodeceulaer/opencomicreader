@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -194,6 +195,9 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		menu.setHeaderTitle(R.string.options);
 
 		menu.findItem(R.id.mnu_readright).setChecked(mPref_ReadRight);
+		if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+			menu.findItem(R.id.mnu_immersive).setVisible(false);
+		}
 
 		switch (mImageView.getScaleMode()) {
 		case ImgTransform.SCALE_NONE:

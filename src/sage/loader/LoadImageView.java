@@ -99,7 +99,8 @@ public class LoadImageView {
 				// if no callback, then load the image ourselves
 				File fImg = new File(imagePath);
 				if (!fImg.exists()) {
-					System.out.println("---Thumb File does not exist " + imagePath);
+					Log.e("reader", "Thumb File does not exist " + imagePath);
+					// TODO: check if the memory card is inserted. If not then use ThumbnailService to recreate the thumbnail.
 					return null;
 				}
 
@@ -121,10 +122,10 @@ public class LoadImageView {
 							viewHeight = bmpOption.outHeight < imgView.getHeight() ? bmpOption.outHeight : imgView.getHeight();
 							bmpOption.inSampleSize = Util.calculateInSampleSize(bmpOption, viewWidth, viewHeight);
 						}
-						System.out.println("sample size for thumb:" + bmpOption.inSampleSize);
+						Log.d("reader", "sample size for thumb:" + bmpOption.inSampleSize);
 					}
 				} catch (Exception e) {
-					System.out.println("Error Getting Image Size " + e.getMessage());
+					Log.e("reader", "Error Getting Image Size for thumbnail " + e.getMessage());
 				}// try
 
 				bmpOption.inJustDecodeBounds = false;

@@ -16,156 +16,176 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.util.Log;
 
 import com.jakewharton.disklrucache.DiskLruCache;
 
-
 //http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html#disk-cache
-public class DiskCache{
+public class DiskCache {
 	private DiskLruCache mCache;
-	private static int VALUE_CNT = 1; //the number of values per cache entry. Must be positive.
+	private static int VALUE_CNT = 1; // the number of values per cache entry. Must be positive.
 	private static int VERSION = 1;
-	private static int BUFFER_SIZE = 8 * 1024; //8K
+	private static int BUFFER_SIZE = 8 * 1024; // 8K
 
-	public DiskCache(Context context,String fldName,long cacheSize){
+	public DiskCache(Context context, String fldName, long cacheSize) {
 		String cachePath;
-		
-		//...........................................
-		//External or Internal Storage.
-		if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) || !Environment.isExternalStorageRemovable())
+
+		// ...........................................
+		// External or Internal Storage.
+		if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) || !Environment.isExternalStorageRemovable())
 			cachePath = context.getExternalCacheDir().getPath();
-		else cachePath = context.getCacheDir().getPath();
-	
-		//...........................................
-		try{
-			mCache = DiskLruCache.open(new File(cachePath + "/" + fldName),VERSION,VALUE_CNT,cacheSize);
+		else
+			cachePath = context.getCacheDir().getPath();
+
+		// ...........................................
+		try {
+			mCache = DiskLruCache.open(new File(cachePath + "/" + fldName), VERSION, VALUE_CNT, cacheSize);
 		} catch (IOException e) {
-			e.printStackTrace();
-		}//try
-	}//func
-	
-	public long size(){ return mCache.size(); }
-	public long maxSize(){ return mCache.getMaxSize(); }
-	
-	public void clear(){
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
+		}// try
+	}// func
+
+	public long size() {
+		return mCache.size();
+	}
+
+	public long maxSize() {
+		return mCache.getMaxSize();
+	}
+
+	public void clear() {
 		try {
 			mCache.delete();
-			System.out.println("ClearCache");
+			Log.d("cache", "ClearCache");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
 		}
-	}//func
-	
-	public void close(){
+	}// func
+
+	public void close() {
 		try {
 			mCache.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
 		}
-	}//func
-	
-	public boolean putBitmap(String key,Bitmap bmp){
+	}// func
+
+	public boolean putBitmap(String key, Bitmap bmp) {
 		DiskLruCache.Editor editor = null;
 		OutputStream oStream = null;
 		boolean isOk = false;
-		System.out.println("PUTBITMAP " + key);
-		System.out.println(hashKey(key));
-		try{
+		Log.d("cache", "PUTBITMAP " + key);
+		Log.d("cache", hashKey(key));
+		try {
 			editor = mCache.edit(hashKey(key));
-			if(editor == null) return false;
-			
-			//Push the image file to the cache
-			oStream = new BufferedOutputStream(editor.newOutputStream(0),BUFFER_SIZE);
-			isOk = bmp.compress(CompressFormat.JPEG,70,oStream);
-			oStream.close(); oStream = null;
+			if (editor == null)
+				return false;
+
+			// Push the image file to the cache
+			oStream = new BufferedOutputStream(editor.newOutputStream(0), BUFFER_SIZE);
+			isOk = bmp.compress(CompressFormat.JPEG, 70, oStream);
+			oStream.close();
+			oStream = null;
 			//
-			if(isOk){
-				mCache.flush();
+			if (isOk) {
 				editor.commit();
-			}else editor.abort();
-			
+				mCache.flush();
+			} else {
+				editor.abort();
+			}
 			editor = null;
-		}catch(IOException e){
-			e.printStackTrace();
-		}finally{
-			if(oStream != null){
-				try{ oStream.close(); }catch(IOException e){ e.printStackTrace(); }
-			}//if
-			
-			if(editor != null){
-				try{ editor.abort(); }catch(IOException e){ e.printStackTrace(); }
-			}//if
-		}//try
-		
+		} catch (IOException e) {
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
+		} finally {
+			if (oStream != null) {
+				try {
+					oStream.close();
+				} catch (IOException e) {
+					Log.e("cache", "Error when dealing with cache" + e.getMessage());
+				}
+			}// if
+
+			if (editor != null) {
+				try {
+					editor.abort();
+				} catch (IOException e) {
+					Log.e("cache", "Error when dealing with cache" + e.getMessage());
+				}
+			}// if
+		}// try
+
 		return isOk;
-	}//func
-	
-	public Bitmap getBitmap(String key){
+	}// func
+
+	public Bitmap getBitmap(String key) {
 		Bitmap bmp = null;
 		DiskLruCache.Snapshot ss = null;
 		InputStream iStream = null;
-		
+
 		try {
-			System.gc(); //This does help, even though this is frowned upon.
+			System.gc(); // This does help, even though this is frowned upon.
 			ss = mCache.get(hashKey(key));
-			if(ss == null) return null;
-			
+			if (ss == null)
+				return null;
+
 			iStream = ss.getInputStream(0);
-			if(iStream != null){
-				final BufferedInputStream biStream = new BufferedInputStream(iStream,BUFFER_SIZE);
+			if (iStream != null) {
+				final BufferedInputStream biStream = new BufferedInputStream(iStream, BUFFER_SIZE);
 				bmp = BitmapFactory.decodeStream(biStream);
-				System.out.println("Loading Bitmap from Cache " + key);
-				System.out.println(hashKey(key));
-			}//if
-			
-		}catch (IOException e){
-			e.printStackTrace();
-		}catch(OutOfMemoryError e){
-			System.out.println("Out of memory getting bitmap from cache.");
-		}finally{
-			if(ss != null) ss.close();
-			if(iStream != null){
-				try{ iStream.close(); }catch(IOException e){ e.printStackTrace(); }
-			}//if
-		}//try
+				Log.d("cache", "Loading Bitmap from Cache " + key);
+				Log.d("cache", hashKey(key));
+			}// if
+
+		} catch (IOException e) {
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
+		} catch (OutOfMemoryError e) {
+			Log.d("cache", "Out of memory getting bitmap from cache.");
+		} finally {
+			if (ss != null)
+				ss.close();
+			if (iStream != null) {
+				try {
+					iStream.close();
+				} catch (IOException e) {
+					Log.e("cache", "Error when dealing with cache" + e.getMessage());
+				}
+			}// if
+		}// try
 
 		return bmp;
-	}//func
-	
-	
-	public boolean contrainsKey(String key){
+	}// func
+
+	public boolean contrainsKey(String key) {
 		boolean isOk = false;
-		
+
 		DiskLruCache.Snapshot ss = null;
-		try{
+		try {
 			ss = mCache.get(hashKey(key));
 			isOk = (ss != null);
-		}catch(IOException e){
-			e.printStackTrace();
-		}finally{
-			if(ss != null) ss.close();
-		}//try
-		
-		return isOk;
-	}//func
+		} catch (IOException e) {
+			Log.e("cache", "Error when dealing with cache" + e.getMessage());
+		} finally {
+			if (ss != null)
+				ss.close();
+		}// try
 
-	
-	private String hashKey(String txt){
+		return isOk;
+	}// func
+
+	private String hashKey(String txt) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			md.update(txt.getBytes("UTF-8"));
 			byte[] digest = md.digest();
-			BigInteger bi = new BigInteger(1,digest);
-			
+			BigInteger bi = new BigInteger(1, digest);
+
 			return bi.toString(16);
-		
+
 		} catch (NoSuchAlgorithmException e) {
-			//throw new AssertionError();
+			// throw new AssertionError();
 		} catch (UnsupportedEncodingException e) {
-			//throw new AssertionError();
+			// throw new AssertionError();
 		}
 		return null;
-	}//func
-}//cls
+	}// func
+}// cls

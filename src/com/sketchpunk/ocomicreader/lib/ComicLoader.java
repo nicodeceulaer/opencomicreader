@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.sketchpunk.ocomicreader.OpenGLESTestingActivity;
@@ -131,7 +132,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			mCache.close();
 			return true;
 		} catch (Exception e) {
-			System.out.println("Error closing archive " + e.getMessage());
+			Log.e("cache", "Error closing archive " + e.getMessage());
 		}// func
 
 		return false;
@@ -156,7 +157,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			mArchive.close();
 			mArchive = null;
 		} catch (Exception e) {
-			System.err.println("LoadArchive " + e.getMessage());
+			Log.e("cache", "LoadArchive " + e.getMessage());
 		}// try
 
 		return false;
@@ -170,7 +171,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 
 		// Check if the cache loader is busy with a request.
 		if (mCacheLoader != null && mCacheLoader.getStatus() != AsyncTask.Status.FINISHED) {
-			System.out.println("Still Loading from Cache.");
+			Log.d("cache", "Still Loading from Cache.");
 			return -1;
 		}// if
 
@@ -205,7 +206,7 @@ public class ComicLoader implements PageLoader.CallBack {// LoadImageView.OnImag
 			pgPath = mPageList.get(mCurrentPage + i);
 			if (!mCache.contrainsKey(pgPath)) { // Preload next page if
 												// available.
-				System.out.println("Next Page is not cached " + Integer.toString(i));
+				Log.d("cache", "Next Page is not cached " + Integer.toString(i));
 				mPageLoader.loadImage(pgPath, mMaxSize, mArchive, 0, true);
 				break;
 			}// if

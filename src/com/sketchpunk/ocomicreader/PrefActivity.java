@@ -12,6 +12,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -141,7 +142,7 @@ public class PrefActivity extends PreferenceActivity implements Preference.OnPre
 		void bindPreferenceClick(CharSequence prefName) {
 			Preference pref = findPreference(prefName);
 			if (pref == null) {
-				System.out.println("Pref Not Found " + prefName);
+				Log.d("prefs", "Pref Not Found " + prefName);
 				return;
 			}
 
@@ -151,7 +152,7 @@ public class PrefActivity extends PreferenceActivity implements Preference.OnPre
 		void bindPreferenceChange(CharSequence prefName) {
 			Preference pref = findPreference(prefName);
 			if (pref == null) {
-				System.out.println("Pref Not Found " + prefName);
+				Log.d("prefs", "Pref Not Found " + prefName);
 				return;
 			}
 

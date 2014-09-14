@@ -80,8 +80,7 @@ public class LibrarySync implements Runnable {
 
 			processLibrary();
 		} catch (Exception e) {
-			System.err.println("Sync " + e.getMessage());
-			e.printStackTrace();
+			Log.e("library", "Error occured during syncing " + e.getMessage());
 		}
 
 		// .....................................
