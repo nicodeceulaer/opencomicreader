@@ -75,8 +75,11 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-		getActionBar().setHomeButtonEnabled(true);
+		ActionBar actionBar = getActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
+			actionBar.setHomeButtonEnabled(true);
+		}
 
 		addDrawerFragment();
 		changeToCorrectContentFragment();
@@ -355,6 +358,9 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	protected void generateTitle() {
 		ActionBar actionBar = getActionBar();
+		if (actionBar == null) {
+			return;
+		}
 
 		if (comicGridFragment != null && drawerFragment != null) {
 			int seriesFilterMode = comicGridFragment.getSeriesFilterMode();
@@ -379,7 +385,7 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 	private void generateSubtitle(int readingFilterMode) {
 		if (drawerFragment != null) {
-			if (readingFilterMode > 0) {
+			if (readingFilterMode > 0 && getActionBar() != null) {
 				getActionBar().setSubtitle(drawerFragment.getReadFilters()[readingFilterMode]);
 			}
 		}

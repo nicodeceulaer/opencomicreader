@@ -21,6 +21,9 @@ import android.view.ScaleGestureDetector.OnScaleGestureListener;
 import android.view.View;
 import android.widget.Toast;
 
+import com.onyx.android.sdk.device.DeviceInfo;
+import com.onyx.android.sdk.device.EpdController.UpdateMode;
+import com.onyx.android.sdk.device.IDeviceFactory.IDeviceController;
 import com.sketchpunk.ocomicreader.lib.ImgTransform;
 
 //Transition idea, First image crushes by width, then new image slides in while old is crushed widthwise.
@@ -243,13 +246,11 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 	@Override
 	protected void onDraw(Canvas canvas) {
 		if (mBitmap != null && !mBitmap.isRecycled()) {
-			if (clearScreenForEInk && newImageFrame < showNewImageFramesFor) {
-				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaintNegative);
-				newImageFrame++;
-				invalidate();
-			} else {
-				canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaint);
-			}
+			canvas.drawBitmap(mBitmap, mImgTrans.srcRect, mImgTrans.viewRect, mPaint);
+			IDeviceController deviceController = DeviceInfo.currentDevice;
+			deviceController.setViewDefaultUpdateMode(this, UpdateMode.GC);
+			// deviceController.setEpdMode(this, EPDMode.FULL);
+			// deviceController.setSystemUpdateModeAndScheme(UpdateMode.GU, UpdateScheme.None, 1);
 		} else
 			Log.d("reader", "Bitmap is null");
 	}// func

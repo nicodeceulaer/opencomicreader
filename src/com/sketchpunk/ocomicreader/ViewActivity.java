@@ -32,6 +32,8 @@ import android.widget.Toast;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.onyx.android.sdk.device.DeviceInfo;
+import com.onyx.android.sdk.device.IDeviceFactory.IDeviceController;
 import com.runeai.runereader.R;
 import com.sketchpunk.ocomicreader.enums.Direction;
 import com.sketchpunk.ocomicreader.lib.ComicLoader;
@@ -67,6 +69,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		IDeviceController deviceController = DeviceInfo.currentDevice;
+		deviceController.hideSystemStatusBar(getApplicationContext());
+
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		// TODO Make sure scale is set from Preferences
@@ -161,6 +167,10 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		OpenHelperManager.releaseHelper();
 		mComicLoad.close();
 		mImageView.recycle();
+
+		IDeviceController deviceController = DeviceInfo.currentDevice;
+		deviceController.showSystemStatusBar(getApplicationContext());
+
 		super.onDestroy();
 	}// func
 
@@ -346,8 +356,9 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 
 			// ....................................
 			// Display page number
-			if (this.mPref_ShowPgNum)
+			if (this.mPref_ShowPgNum) {
 				showToast(String.format("%d / %d", currentPage + 1, mComicLoad.getPageCount()), 0);
+			}
 		}// if
 	}// func
 
