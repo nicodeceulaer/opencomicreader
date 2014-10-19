@@ -13,13 +13,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
 import android.view.View;
-import android.widget.Toast;
 
 import com.onyx.android.sdk.device.DeviceInfo;
 import com.onyx.android.sdk.device.EpdController.UpdateMode;
@@ -268,23 +266,6 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 			mGestureMode = 0;
 
 		// ...............................................................
-		// One finger Zoom
-		if (mGestureMode == 3) {
-			if (action == MotionEvent.ACTION_MOVE) {
-				float y = e.getY();
-				float ratio = (float) Math.sqrt(mLastY / y);
-				ratio *= (ratio >= 1) ? 1.02 : 0.98; // Speed up the scaling a
-														// bit.
-
-				if (mImgTrans.appyScaleRatio(ratio))
-					invalidate();
-
-				mLastY = y;
-			}// if
-			return true;
-		}// if
-
-		// ...............................................................
 		// Only do scale gesture checking if there is more then one finger
 		if (e.getPointerCount() > 1) {
 			if (mFingerGesture.onTouchEvent(e))
@@ -332,16 +313,10 @@ public class GestureImageView extends View implements OnScaleGestureListener, Ge
 
 	@Override
 	public void onLongPress(MotionEvent e) {
-		if (e.getPointerCount() > 1 || !(mGestureMode == 0 || mGestureMode == 3))
+		if (e.getPointerCount() > 1 || mGestureMode != 0)
 			return; // One finger zooming, other wise other multi finger gesture
 					// get interrupted.
-		if (mGestureMode == 0)
-			mGestureMode = 3;
 		mLastY = e.getY();
-
-		Toast toast = Toast.makeText(mContext, "One Touch Zoom Enabled", Toast.LENGTH_SHORT);
-		toast.setGravity(Gravity.TOP | Gravity.RIGHT, 0, 0);
-		toast.show();
 	}// func
 
 	@Override

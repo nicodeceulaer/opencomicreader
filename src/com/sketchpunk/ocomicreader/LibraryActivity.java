@@ -31,6 +31,8 @@ import android.widget.Toast;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.onyx.android.sdk.device.DeviceInfo;
+import com.onyx.android.sdk.device.IDeviceFactory.IDeviceController;
 import com.runeai.runereader.R;
 import com.sketchpunk.ocomicreader.fragments.ComicGridFragment;
 import com.sketchpunk.ocomicreader.fragments.DrawerFragment;
@@ -58,6 +60,9 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		IDeviceController deviceController = DeviceInfo.currentDevice;
+		deviceController.showSystemStatusBar(getApplicationContext());
 
 		databaseHelper = getHelper();
 

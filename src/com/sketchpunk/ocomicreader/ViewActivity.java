@@ -168,8 +168,8 @@ public class ViewActivity extends Activity implements ComicLoader.ComicLoaderLis
 		mComicLoad.close();
 		mImageView.recycle();
 
-		IDeviceController deviceController = DeviceInfo.currentDevice;
-		deviceController.showSystemStatusBar(getApplicationContext());
+		// IDeviceController deviceController = DeviceInfo.currentDevice;
+		// deviceController.showSystemStatusBar(getApplicationContext());
 
 		super.onDestroy();
 	}// func
