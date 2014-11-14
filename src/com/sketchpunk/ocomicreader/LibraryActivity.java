@@ -88,6 +88,10 @@ public class LibraryActivity extends FragmentActivity implements ComicLibrary.Sy
 
 		addDrawerFragment();
 		changeToCorrectContentFragment();
+
+		if(prefs.getBoolean("openLastComicAfterLaunch", false)) {
+			goToLastComic();
+		}
 	}// func
 
 	private DatabaseHelper getHelper() {
